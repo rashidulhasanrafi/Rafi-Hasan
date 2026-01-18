@@ -9,7 +9,7 @@ import { CategorySettings } from './CategorySettings';
 import { ShareModal } from './ShareModal';
 import { CalculatorModal } from './CalculatorModal';
 import { GoalModal } from './GoalModal';
-import { NotebookPen, Settings, UserCircle, Calculator, Check, X, Target } from 'lucide-react';
+import { NotebookPen, Settings, UserCircle, Calculator, Check, X, Target, Share2 } from 'lucide-react';
 import { playSound } from '../utils/sound';
 
 interface Props {
@@ -527,6 +527,15 @@ export const Tracker: React.FC<Props> = ({
                <Calculator size={20} />
              </button>
 
+             {/* Share Button */}
+             <button
+               onClick={() => { handleClickSound(); setShowShareModal(true); }}
+               className="p-2 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+               title="Share & Export"
+             >
+               <Share2 size={20} />
+             </button>
+
              {/* Goals Button */}
              <button
                onClick={() => { handleClickSound(); setShowGoalModal(true); }}
@@ -558,4 +567,34 @@ export const Tracker: React.FC<Props> = ({
           
           <div className="lg:col-span-1 space-y-6">
              <TransactionForm 
-                onAddTransaction={
+                onAddTransaction={addTransaction} 
+                onUpdateTransaction={updateTransaction}
+                editingTransaction={editingTransaction}
+                onCancelEdit={handleCancelEdit}
+                currencySymbol={currentCurrencySymbol} 
+                language={language}
+                incomeCategories={incomeCategories}
+                expenseCategories={expenseCategories}
+                savingsCategories={savingsCategories}
+                soundEnabled={soundEnabled}
+             />
+             <AISuggestion transactions={mainTransactions} stats={stats} language={language} currency={currency} />
+          </div>
+
+          <div className="lg:col-span-2 space-y-6 animate-slideUp" style={{ animationDelay: '300ms' }}>
+            <ExpenseChart transactions={mainTransactions} currency={currency} language={language} darkMode={darkMode} />
+            <TransactionList 
+              transactions={mainTransactions} 
+              onDelete={deleteTransaction} 
+              onEdit={handleEditTransaction}
+              currency={currency} 
+              language={language}
+              soundEnabled={soundEnabled}
+            />
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+};
