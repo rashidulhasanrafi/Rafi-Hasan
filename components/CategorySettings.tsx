@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TransactionType, TRANSLATIONS, Language, getLocalizedCategory } from '../types';
 import { X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard, Share2 } from 'lucide-react';
 import { playSound } from '../utils/sound';
@@ -7,6 +7,7 @@ import { safeCopy } from '../utils/clipboard';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: 'general' | 'categories';
   // Category Props
   incomeCategories: string[];
   expenseCategories: string[];
@@ -27,11 +28,10 @@ interface Props {
   onOpenShare: () => void;
 }
 
-type MainTab = 'general' | 'categories';
-
 export const CategorySettings: React.FC<Props> = ({
   isOpen,
   onClose,
+  initialTab = 'general',
   incomeCategories,
   expenseCategories,
   savingsCategories,
@@ -48,7 +48,7 @@ export const CategorySettings: React.FC<Props> = ({
   onImportData,
   onOpenShare
 }) => {
-  const [mainTab, setMainTab] = useState<MainTab>('general');
+  // If we are in 'categories' mode, we need sub-tabs for Inc/Exp/Sav.
   const [categoryTab, setCategoryTab] = useState<TransactionType>(TransactionType.EXPENSE);
   const [newCategory, setNewCategory] = useState('');
   const [deleteInfo, setDeleteInfo] = useState<{ type: TransactionType, name: string } | null>(null);
@@ -165,6 +165,12 @@ export const CategorySettings: React.FC<Props> = ({
     return expenseCategories;
   };
 
+  const isGeneralMode = initialTab === 'general';
+  
+  // Title based on mode
+  const modalTitle = isGeneralMode ? t.title : (language === 'bn' ? 'বিভাগ পরিচালনা' : 'Manage Categories');
+  const HeaderIcon = isGeneralMode ? Settings : LayoutGrid;
+
   return (
     <>
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -173,45 +179,19 @@ export const CategorySettings: React.FC<Props> = ({
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md relative z-10 flex flex-col max-h-[85vh] transition-colors animate-in zoom-in-95 duration-200">
           <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-700">
             <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <Settings size={20} className="text-indigo-600 dark:text-indigo-400" />
-              {t.title}
+              <HeaderIcon size={20} className={isGeneralMode ? "text-red-500" : "text-violet-600 dark:text-violet-400"} />
+              {modalTitle}
             </h3>
             <button onClick={() => { playClick(); onClose(); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full text-slate-500 dark:text-slate-400 transition-colors">
               <X size={20} />
             </button>
           </div>
 
-          {/* Main Tabs */}
-          <div className="flex p-4 pb-0 gap-2 border-b border-slate-100 dark:border-slate-700">
-             <button
-               onClick={() => { playClick(); setMainTab('general'); }}
-               className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2 ${
-                 mainTab === 'general'
-                   ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                   : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-               }`}
-             >
-               <Sliders size={16} />
-               {t.generalTab}
-             </button>
-             <button
-               onClick={() => { playClick(); setMainTab('categories'); }}
-               className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2 ${
-                 mainTab === 'categories'
-                   ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                   : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-               }`}
-             >
-               <LayoutGrid size={16} />
-               {t.categoriesTab}
-             </button>
-          </div>
-
           <div className="flex-1 overflow-y-auto">
-            {mainTab === 'general' ? (
+            {isGeneralMode ? (
               <div className="p-4 space-y-6">
                 
-                {/* Share & Export Link (New) */}
+                {/* Share & Export Link */}
                 <div 
                   onClick={() => { playClick(); onOpenShare(); }}
                   className="flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors border border-indigo-100 dark:border-indigo-800"
@@ -379,7 +359,7 @@ export const CategorySettings: React.FC<Props> = ({
               </div>
             ) : (
               <div className="flex flex-col h-full">
-                {/* Category Tabs */}
+                {/* Category Type Tabs */}
                 <div className="flex p-4 gap-2">
                   <button
                     onClick={() => { playClick(); setCategoryTab(TransactionType.EXPENSE); }}

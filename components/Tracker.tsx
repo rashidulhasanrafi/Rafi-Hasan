@@ -9,7 +9,7 @@ import { CategorySettings } from './CategorySettings';
 import { ShareModal } from './ShareModal';
 import { CalculatorModal } from './CalculatorModal';
 import { GoalModal } from './GoalModal';
-import { NotebookPen, Settings, UserCircle, Calculator, Check, X, Target, Share2 } from 'lucide-react';
+import { NotebookPen, Check, X } from 'lucide-react';
 import { playSound } from '../utils/sound';
 
 interface Props {
@@ -28,6 +28,131 @@ interface Props {
   onImportData: (file: File) => void;
 }
 
+// Custom Currency Icon Component
+const CurrencyIcon = () => (
+  <div className="relative w-12 h-7 flex-shrink-0">
+    <div className="absolute left-0 top-0.5 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center border border-white dark:border-slate-800 shadow-sm z-10 transform -rotate-3">
+      <span className="text-yellow-300 font-bold text-[10px]">€</span>
+    </div>
+    <div className="absolute right-0 top-0.5 w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center border border-white dark:border-slate-800 shadow-sm z-10 transform rotate-3">
+      <span className="text-white font-bold text-[10px] mt-0.5">৳</span>
+    </div>
+    <div className="absolute left-1/2 -translate-x-1/2 -top-0.5 w-7 h-7 rounded-full bg-green-500 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-md z-20">
+      <span className="text-white font-bold text-xs">$</span>
+    </div>
+  </div>
+);
+
+// Custom Wallet Icon
+const CustomWalletIcon = () => (
+  <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+       <path d="M8 14L14 8H36L30 14H8Z" fill="#3B82F6" stroke="#0F172A" strokeWidth="3" strokeLinejoin="round"/>
+       <path d="M14 14L20 6H40L34 14H14Z" fill="#FACC15" stroke="#0F172A" strokeWidth="3" strokeLinejoin="round"/>
+       <rect x="4" y="14" width="40" height="26" rx="5" fill="#F97316" stroke="#0F172A" strokeWidth="3"/>
+       <path d="M9 19H19" stroke="#FDBA74" strokeWidth="3" strokeLinecap="round"/>
+       <path d="M30 14V22C30 24.2091 31.7909 26 34 26H44" stroke="#0F172A" strokeWidth="3" strokeLinejoin="round"/>
+       <path d="M30 14H44V22C44 24.2091 42.2091 26 40 26H34C31.7909 26 30 24.2091 30 22V14Z" fill="#C2410C"/>
+       <circle cx="37" cy="20" r="2.5" fill="#FDBA74" stroke="#0F172A" strokeWidth="2"/>
+    </svg>
+  </div>
+);
+
+// Custom Profile Icon
+const CustomProfileIcon = () => (
+    <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+            <circle cx="24" cy="24" r="22" fill="url(#pgrad)" stroke="#1D4ED8" strokeWidth="1"/>
+            <defs>
+                <linearGradient id="pgrad" x1="24" y1="2" x2="24" y2="46" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#60A5FA"/>
+                    <stop offset="1" stopColor="#2563EB"/>
+                </linearGradient>
+            </defs>
+            <ellipse cx="24" cy="12" rx="12" ry="6" fill="white" fillOpacity="0.25"/>
+            <g filter="url(#dropShadow)">
+                <circle cx="24" cy="19" r="8" fill="white"/>
+                <path d="M10 40C10 32 16 28 24 28C32 28 38 32 38 40V44H10V40Z" fill="white"/>
+            </g>
+            <defs>
+                <filter id="dropShadow" x="10" y="11" width="28" height="34" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                   <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.1"/>
+                </filter>
+            </defs>
+        </svg>
+    </div>
+);
+
+// Custom Calculator Icon
+const CustomCalculatorIcon = () => (
+  <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <rect x="6" y="4" width="36" height="40" rx="6" fill="#DBEAFE" stroke="#1E293B" strokeWidth="3"/>
+      <rect x="11" y="9" width="26" height="8" rx="2" fill="#FACC15" stroke="#1E293B" strokeWidth="2"/>
+      <rect x="11" y="21" width="7" height="6" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="2"/>
+      <rect x="20.5" y="21" width="7" height="6" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="2"/>
+      <rect x="30" y="21" width="7" height="6" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="2"/>
+      <rect x="11" y="29" width="7" height="6" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="2"/>
+      <rect x="20.5" y="29" width="7" height="6" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="2"/>
+      <rect x="30" y="29" width="7" height="13" rx="2" fill="#EF4444" stroke="#1E293B" strokeWidth="2"/>
+      <rect x="11" y="37" width="7" height="5" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="2"/>
+      <rect x="20.5" y="37" width="7" height="5" rx="2" fill="#3B82F6" stroke="#1E293B" strokeWidth="2"/>
+    </svg>
+  </div>
+);
+
+// Custom Settings Icon (Perfect Circle Gear)
+const CustomSettingsIcon = () => (
+  <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
+     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+        <defs>
+           <linearGradient id="gearMetal" x1="24" y1="4" x2="24" y2="44" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stopColor="#E2E8F0" />
+              <stop offset="1" stopColor="#94A3B8" />
+           </linearGradient>
+           <filter id="innerShadow">
+              <feOffset dx="0" dy="1" />
+              <feGaussianBlur stdDeviation="1" result="offset-blur" />
+              <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
+              <feFlood floodColor="black" floodOpacity="0.2" result="color" />
+              <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+              <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+           </filter>
+        </defs>
+        
+        {/* Outer Circle Ring */}
+        <circle cx="24" cy="24" r="20" fill="url(#gearMetal)" stroke="#64748B" strokeWidth="2" />
+        
+        {/* Gear Teeth Ring */}
+        <path d="M24 6V10M24 38V42M6 24H10M38 24H42M11.3 11.3L14.1 14.1M33.9 33.9L36.7 36.7M11.3 36.7L14.1 33.9M33.9 14.1L36.7 11.3" 
+              stroke="#64748B" strokeWidth="4" strokeLinecap="round" />
+        
+        {/* Inner Body */}
+        <circle cx="24" cy="24" r="14" fill="#F1F5F9" stroke="#64748B" strokeWidth="2" />
+        
+        {/* Center Blue Circle */}
+        <circle cx="24" cy="24" r="6" fill="#3B82F6" stroke="#1D4ED8" strokeWidth="2" />
+     </svg>
+  </div>
+);
+
+// Custom Category Icon
+const CustomCategoryIcon = () => (
+  <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
+     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+        <rect x="6" y="6" width="16" height="16" rx="4" stroke="#3B82F6" strokeWidth="3" fill="none"/>
+        <line x1="10" y1="11" x2="18" y2="11" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round"/>
+        <line x1="10" y1="17" x2="18" y2="17" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round"/>
+        <rect x="26" y="6" width="16" height="16" rx="4" stroke="#3B82F6" strokeWidth="3" fill="none"/>
+        <rect x="30" y="10" width="8" height="8" rx="1" fill="#93C5FD"/>
+        <rect x="6" y="26" width="16" height="16" rx="4" stroke="#A855F7" strokeWidth="3" fill="none"/>
+        <circle cx="14" cy="34" r="4" fill="#C084FC"/>
+        <rect x="26" y="26" width="16" height="16" rx="4" stroke="#A855F7" strokeWidth="3" fill="none"/>
+        <rect x="29" y="30" width="10" height="6" rx="1" stroke="#C084FC" strokeWidth="2"/>
+     </svg>
+  </div>
+);
+
 export const Tracker: React.FC<Props> = ({ 
   profileId, 
   profileName, 
@@ -42,7 +167,6 @@ export const Tracker: React.FC<Props> = ({
   onExportData,
   onImportData
 }) => {
-  // Key names are now dynamic based on profileId
   const STORAGE_KEY = `zenfinance_transactions_${profileId}`;
   const CURRENCY_STORAGE_KEY = `zenfinance_currency_${profileId}`;
   const INCOME_CAT_STORAGE_KEY = `zenfinance_income_categories_${profileId}`;
@@ -53,25 +177,21 @@ export const Tracker: React.FC<Props> = ({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [stats, setStats] = useState<DashboardStats>({ totalIncome: 0, totalExpense: 0, totalSavings: 0, balance: 0 });
-  // Default currency changed to BDT
   const [currency, setCurrency] = useState('BDT');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   
-  // Category State
   const [incomeCategories, setIncomeCategories] = useState<string[]>(DEFAULT_INCOME_CATEGORIES);
   const [expenseCategories, setExpenseCategories] = useState<string[]>(DEFAULT_EXPENSE_CATEGORIES);
   const [savingsCategories, setSavingsCategories] = useState<string[]>(DEFAULT_SAVINGS_CATEGORIES);
   
-  // Modal States
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<'general' | 'categories'>('general');
   const [showShareModal, setShowShareModal] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
-  // Load data when profileId changes (component mounts)
   useEffect(() => {
-    // Default to BDT if nothing saved
     const savedCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY) || 'BDT';
     const savedTransactions = localStorage.getItem(STORAGE_KEY);
     const savedGoals = localStorage.getItem(GOALS_STORAGE_KEY);
@@ -110,16 +230,13 @@ export const Tracker: React.FC<Props> = ({
     setIncomeCategories(savedIncomeCats ? JSON.parse(savedIncomeCats) : DEFAULT_INCOME_CATEGORIES);
     setExpenseCategories(savedExpenseCats ? JSON.parse(savedExpenseCats) : DEFAULT_EXPENSE_CATEGORIES);
     setSavingsCategories(savedSavingsCats ? JSON.parse(savedSavingsCats) : DEFAULT_SAVINGS_CATEGORIES);
-    setEditingTransaction(null); // Clear editing state on profile switch
+    setEditingTransaction(null); 
 
-  }, [profileId]); // Crucial: reload when profileId changes
+  }, [profileId]);
 
-  // Save to local storage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
     
-    // Calculate stats
-    // Note: Transaction amounts are already stored in the current currency
     const income = transactions
       .filter(t => t.type === TransactionType.INCOME)
       .reduce((sum, t) => sum + t.amount, 0);
@@ -128,12 +245,10 @@ export const Tracker: React.FC<Props> = ({
       .filter(t => t.type === TransactionType.EXPENSE)
       .reduce((sum, t) => sum + t.amount, 0);
 
-    // Total Savings (Sum of all savings transactions, including negative withdrawals)
     const totalSavings = transactions
       .filter(t => t.type === TransactionType.SAVINGS)
       .reduce((sum, t) => sum + t.amount, 0);
 
-    // Deducted Savings are only those that are meant to reduce the current cash balance
     const deductedSavings = transactions
       .filter(t => t.type === TransactionType.SAVINGS && !t.excludeFromBalance)
       .reduce((sum, t) => sum + t.amount, 0);
@@ -142,18 +257,14 @@ export const Tracker: React.FC<Props> = ({
       totalIncome: income,
       totalExpense: expense,
       totalSavings: totalSavings,
-      // Balance = Income - Expense - (Savings that affect balance)
-      // Note: If t.amount is negative (withdrawal), subtracting a negative adds to balance. Correct.
       balance: income - expense - deductedSavings
     });
   }, [transactions, currency, profileId]);
 
-  // Persist Goals
   useEffect(() => {
     localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals));
   }, [goals, profileId]);
 
-  // Persist Categories
   useEffect(() => {
     localStorage.setItem(INCOME_CAT_STORAGE_KEY, JSON.stringify(incomeCategories));
   }, [incomeCategories, profileId]);
@@ -171,22 +282,16 @@ export const Tracker: React.FC<Props> = ({
       setShowCurrencyModal(false);
       return;
     }
-
-    // Hard Conversion Logic: Convert ALL existing amounts to the new currency
     const oldRate = EXCHANGE_RATES[currency] || 1;
     const newRate = EXCHANGE_RATES[newCurrency] || 1;
-    
-    // Conversion formula: (amount / oldRate) * newRate
     const convert = (val: number) => (val / oldRate) * newRate;
 
-    // 1. Convert Transactions
     const updatedTransactions = transactions.map(t => ({
       ...t,
       amount: convert(t.amount),
       currency: newCurrency
     }));
 
-    // 2. Convert Goals
     const updatedGoals = goals.map(g => ({
       ...g,
       targetAmount: convert(g.targetAmount),
@@ -194,14 +299,10 @@ export const Tracker: React.FC<Props> = ({
       currency: newCurrency
     }));
 
-    // Batch updates
     setTransactions(updatedTransactions);
     setGoals(updatedGoals);
     setCurrency(newCurrency);
-    
-    // Save new currency preference
     localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
-    
     if (soundEnabled) playSound('click');
     setShowCurrencyModal(false);
   };
@@ -267,34 +368,14 @@ export const Tracker: React.FC<Props> = ({
     }
   };
 
-  // --- GOAL & SAVINGS FUNCTIONS ---
-  
-  // General Savings Operations (Not linked to specific Goal)
   const handleGeneralDeposit = (amount: number) => {
-     addTransaction(
-         amount, 
-         'General Savings', 
-         'Deposit to General Savings', 
-         TransactionType.SAVINGS, 
-         new Date().toISOString().split('T')[0], 
-         false
-     );
+     addTransaction(amount, 'General Savings', 'Deposit to General Savings', TransactionType.SAVINGS, new Date().toISOString().split('T')[0], false);
   };
 
   const handleGeneralWithdraw = (amount: number) => {
-     // Withdrawal is a negative savings transaction
-     // This reduces Total Savings and Increases Balance (double negative)
-     addTransaction(
-         -amount, 
-         'Savings Withdrawal', 
-         'Withdrawal from General Savings', 
-         TransactionType.SAVINGS, 
-         new Date().toISOString().split('T')[0], 
-         false
-     );
+     addTransaction(-amount, 'Savings Withdrawal', 'Withdrawal from General Savings', TransactionType.SAVINGS, new Date().toISOString().split('T')[0], false);
   };
 
-  // Specific Goal Operations
   const handleAddGoal = (name: string, targetAmount: number, category: string, isFixedDeposit?: boolean) => {
     const newGoal: Goal = {
       id: crypto.randomUUID(),
@@ -309,11 +390,7 @@ export const Tracker: React.FC<Props> = ({
   };
 
   const handleUpdateGoal = (id: string, name: string, targetAmount: number, category: string, isFixedDeposit?: boolean) => {
-    setGoals(prev => prev.map(g => 
-        g.id === id 
-        ? { ...g, name, targetAmount, category, isFixedDeposit } 
-        : g
-    ));
+    setGoals(prev => prev.map(g => g.id === id ? { ...g, name, targetAmount, category, isFixedDeposit } : g));
   };
 
   const handleDeleteGoal = (id: string) => {
@@ -321,19 +398,14 @@ export const Tracker: React.FC<Props> = ({
   };
 
   const handleAddFundsToGoal = (goalId: string, amount: number) => {
-    // 1. Update Goal Amount
     setGoals(prev => prev.map(g => {
       if (g.id === goalId) {
         return { ...g, savedAmount: g.savedAmount + amount };
       }
       return g;
     }));
-
-    // 2. Create Transaction for History
     const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
-
-    // Deduct from balance by creating a savings transaction
     const newTransaction: Transaction = {
         id: crypto.randomUUID(),
         amount: amount,
@@ -342,28 +414,23 @@ export const Tracker: React.FC<Props> = ({
         type: TransactionType.SAVINGS,
         currency: currency,
         date: new Date().toISOString().split('T')[0],
-        excludeFromBalance: false // Deducts from Main Balance
+        excludeFromBalance: false 
     };
     setTransactions(prev => [newTransaction, ...prev]);
   };
 
   const handleWithdrawFundsFromGoal = (goalId: string, amount: number) => {
-     // 1. Update Goal Amount (decrease)
      setGoals(prev => prev.map(g => {
         if (g.id === goalId) {
             return { ...g, savedAmount: Math.max(0, g.savedAmount - amount) };
         }
         return g;
      }));
-
-     // 2. Create Transaction
-     // Use negative savings amount to represent withdrawal back to wallet
      const goal = goals.find(g => g.id === goalId);
      if (!goal) return;
-
      const newTransaction: Transaction = {
         id: crypto.randomUUID(),
-        amount: -amount, // Negative amount adds back to wallet balance
+        amount: -amount,
         category: 'Savings Withdrawal',
         note: `Withdrawal from: ${goal.name}`,
         type: TransactionType.SAVINGS, 
@@ -385,216 +452,225 @@ export const Tracker: React.FC<Props> = ({
     if (soundEnabled) playSound('click');
   };
 
+  const openCategories = () => {
+    setSettingsInitialTab('categories');
+    setShowSettings(true);
+    handleClickSound();
+  };
+
+  const openGeneralSettings = () => {
+    setSettingsInitialTab('general');
+    setShowSettings(true);
+    handleClickSound();
+  };
+
   const currentCurrencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol || '$';
   const tSettings = TRANSLATIONS[language].settings;
-
-  // We use all transactions now
   const mainTransactions = transactions;
   
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300 flex flex-col">
-      <CategorySettings 
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        incomeCategories={incomeCategories}
-        expenseCategories={expenseCategories}
-        savingsCategories={savingsCategories}
-        onAddCategory={handleAddCategory}
-        onRemoveCategory={handleRemoveCategory}
-        language={language}
-        onLanguageChange={(lang) => { handleClickSound(); onLanguageChange(lang); }}
-        darkMode={darkMode}
-        toggleDarkMode={() => { handleClickSound(); toggleDarkMode(); }}
-        soundEnabled={soundEnabled}
-        toggleSound={handleToggleSound}
-        onClearAllData={onClearAllData}
-        onExportData={onExportData}
-        onImportData={onImportData}
-        onOpenShare={() => { setShowSettings(false); setShowShareModal(true); }}
-      />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300 flex flex-col relative">
+      
+      {/* Background Blobs for Glassmorphism */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/20 blur-[120px] dark:bg-blue-600/10" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-400/20 blur-[120px] dark:bg-emerald-600/10" />
+        <div className="absolute top-[40%] left-[40%] w-[40%] h-[40%] rounded-full bg-violet-400/20 blur-[120px] dark:bg-violet-600/10" />
+      </div>
 
-      <ShareModal 
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        transactions={transactions}
-        stats={stats}
-        profileName={profileName}
-        currency={currency}
-        language={language}
-        soundEnabled={soundEnabled}
-      />
+      <div className="relative z-10 flex flex-col flex-grow">
+        <CategorySettings 
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          initialTab={settingsInitialTab}
+          incomeCategories={incomeCategories}
+          expenseCategories={expenseCategories}
+          savingsCategories={savingsCategories}
+          onAddCategory={handleAddCategory}
+          onRemoveCategory={handleRemoveCategory}
+          language={language}
+          onLanguageChange={(lang) => { handleClickSound(); onLanguageChange(lang); }}
+          darkMode={darkMode}
+          toggleDarkMode={() => { handleClickSound(); toggleDarkMode(); }}
+          soundEnabled={soundEnabled}
+          toggleSound={handleToggleSound}
+          onClearAllData={onClearAllData}
+          onExportData={onExportData}
+          onImportData={onImportData}
+          onOpenShare={() => { setShowSettings(false); setShowShareModal(true); }}
+        />
 
-      <CalculatorModal
-        isOpen={showCalculator}
-        onClose={() => setShowCalculator(false)}
-        language={language}
-        soundEnabled={soundEnabled}
-      />
+        <ShareModal 
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          transactions={transactions}
+          stats={stats}
+          profileName={profileName}
+          currency={currency}
+          language={language}
+          soundEnabled={soundEnabled}
+        />
 
-      <GoalModal
-        isOpen={showGoalModal}
-        onClose={() => setShowGoalModal(false)}
-        goals={goals}
-        totalSavings={stats.totalSavings}
-        onAddGoal={handleAddGoal}
-        onUpdateGoal={handleUpdateGoal}
-        onDeleteGoal={handleDeleteGoal}
-        onAddFunds={handleAddFundsToGoal}
-        onWithdrawFunds={handleWithdrawFundsFromGoal}
-        onGeneralDeposit={handleGeneralDeposit}
-        onGeneralWithdraw={handleGeneralWithdraw}
-        language={language}
-        currency={currency}
-        soundEnabled={soundEnabled}
-        savingsCategories={savingsCategories}
-      />
+        <CalculatorModal
+          isOpen={showCalculator}
+          onClose={() => setShowCalculator(false)}
+          language={language}
+          soundEnabled={soundEnabled}
+        />
 
-      {/* Currency Modal */}
-      {showCurrencyModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowCurrencyModal(false)} />
-           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm relative z-10 flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
-               <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                   <h3 className="font-bold text-slate-800 dark:text-white">{tSettings.selectCurrency}</h3>
-                   <button onClick={() => setShowCurrencyModal(false)} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
-                      <X size={20} className="text-slate-500" />
-                   </button>
-               </div>
-               <div className="p-2 overflow-y-auto max-h-[60vh]">
-                   {CURRENCIES.map(c => (
-                       <button
-                         key={c.code}
-                         onClick={() => handleCurrencyChange(c.code)}
-                         className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
-                             currency === c.code 
-                             ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold' 
-                             : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200'
-                         }`}
-                       >
-                           <div className="flex items-center gap-3">
-                               <span className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm">
-                                   {c.symbol}
-                               </span>
-                               <div className="text-left">
-                                   <div className="text-sm">{c.code}</div>
-                                   <div className="text-xs opacity-70 font-normal">{c.name}</div>
-                               </div>
-                           </div>
-                           {currency === c.code && <Check size={18} />}
-                       </button>
-                   ))}
-               </div>
-           </div>
-        </div>
-      )}
+        <GoalModal
+          isOpen={showGoalModal}
+          onClose={() => setShowGoalModal(false)}
+          goals={goals}
+          totalSavings={stats.totalSavings}
+          onAddGoal={handleAddGoal}
+          onUpdateGoal={handleUpdateGoal}
+          onDeleteGoal={handleDeleteGoal}
+          onAddFunds={handleAddFundsToGoal}
+          onWithdrawFunds={handleWithdrawFundsFromGoal}
+          onGeneralDeposit={handleGeneralDeposit}
+          onGeneralWithdraw={handleGeneralWithdraw}
+          language={language}
+          currency={currency}
+          soundEnabled={soundEnabled}
+          savingsCategories={savingsCategories}
+        />
 
-      {/* Header */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 transition-colors duration-300 animate-slideDown">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-green-600 p-2 rounded-lg shadow-sm animate-bounce">
-              <NotebookPen className="text-white" size={20} />
+        {showCurrencyModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowCurrencyModal(false)} />
+             <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm relative z-10 flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
+                 <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                     <h3 className="font-bold text-slate-800 dark:text-white">{tSettings.selectCurrency}</h3>
+                     <button onClick={() => setShowCurrencyModal(false)} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
+                        <X size={20} className="text-slate-500" />
+                     </button>
+                 </div>
+                 <div className="p-2 overflow-y-auto max-h-[60vh]">
+                     {CURRENCIES.map(c => (
+                         <button
+                           key={c.code}
+                           onClick={() => handleCurrencyChange(c.code)}
+                           className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+                               currency === c.code 
+                               ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-bold' 
+                               : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200'
+                           }`}
+                         >
+                             <div className="flex items-center gap-3">
+                                 <span className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm">
+                                     {c.symbol}
+                                 </span>
+                                 <div className="text-left">
+                                     <div className="text-sm">{c.code}</div>
+                                     <div className="text-xs opacity-70 font-normal">{c.name}</div>
+                                 </div>
+                             </div>
+                             {currency === c.code && <Check size={18} />}
+                         </button>
+                     ))}
+                 </div>
+             </div>
+          </div>
+        )}
+
+        <header className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/30 dark:border-white/10 sticky top-0 z-50 transition-all duration-300 animate-slideDown shadow-sm">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-green-600 p-2 rounded-lg shadow-sm animate-bounce">
+                <NotebookPen className="text-white" size={20} />
+              </div>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400 hidden sm:block">
+                Hisab
+              </h1>
             </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-teal-600 dark:from-green-400 dark:to-teal-400 hidden sm:block">
-              Hisab
-            </h1>
+            
+            <div className="flex items-center gap-2 sm:gap-3">
+               <button 
+                 onClick={() => { handleClickSound(); onOpenProfileManager(); }}
+                 className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all active:scale-95 group"
+                 title={`Profile: ${profileName}`}
+               >
+                 <CustomProfileIcon />
+               </button>
+
+               <button
+                 onClick={openCategories}
+                 className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all active:scale-95 group"
+                 title="Categories"
+               >
+                 <CustomCategoryIcon />
+               </button>
+
+               <button
+                 onClick={() => { handleClickSound(); setShowCurrencyModal(true); }}
+                 className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all active:scale-95 group"
+                 title="Change Currency"
+               >
+                  <CurrencyIcon />
+               </button>
+
+               <button
+                 onClick={() => { handleClickSound(); setShowGoalModal(true); }}
+                 className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all active:scale-95 group"
+                 title="Funds & Savings"
+               >
+                 <CustomWalletIcon />
+               </button>
+               
+               <button
+                 onClick={() => { handleClickSound(); setShowCalculator(true); }}
+                 className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all active:scale-95 group"
+                 title="Calculator"
+               >
+                 <CustomCalculatorIcon />
+               </button>
+
+               <button
+                 onClick={openGeneralSettings}
+                 className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all active:scale-95 group"
+                 title="Settings"
+               >
+                 <CustomSettingsIcon />
+               </button>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2 sm:gap-3">
-             {/* Currency Button (Compact) */}
-             <button
-               onClick={() => { handleClickSound(); setShowCurrencyModal(true); }}
-               className="bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 px-3 py-2 rounded-lg text-sm font-bold transition-all active:scale-95 flex items-center gap-1"
-             >
-                {currency}
-             </button>
+        </header>
 
-             {/* Profile Switcher Button */}
-             <button 
-               onClick={() => { handleClickSound(); onOpenProfileManager(); }}
-               className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-3 py-2 rounded-lg transition-all active:scale-95 border border-indigo-200 dark:border-indigo-800"
-             >
-               <UserCircle size={18} />
-               <span className="text-sm font-medium hidden sm:block">{profileName}</span>
-             </button>
-             
-             {/* Calculator Button */}
-             <button
-               onClick={() => { handleClickSound(); setShowCalculator(true); }}
-               className="p-2 text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-all active:scale-90"
-               title="Calculator"
-             >
-               <Calculator size={20} />
-             </button>
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+          <StatsComponent stats={stats} currency={currency} language={language} />
 
-             {/* Share Button */}
-             <button
-               onClick={() => { handleClickSound(); setShowShareModal(true); }}
-               className="p-2 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
-               title="Share & Export"
-             >
-               <Share2 size={20} />
-             </button>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 space-y-6">
+               <TransactionForm 
+                  onAddTransaction={addTransaction} 
+                  onUpdateTransaction={updateTransaction}
+                  editingTransaction={editingTransaction}
+                  onCancelEdit={handleCancelEdit}
+                  currencySymbol={currentCurrencySymbol} 
+                  language={language}
+                  incomeCategories={incomeCategories}
+                  expenseCategories={expenseCategories}
+                  savingsCategories={savingsCategories}
+                  soundEnabled={soundEnabled}
+               />
+               <AISuggestion transactions={mainTransactions} stats={stats} language={language} currency={currency} />
+            </div>
 
-             {/* Goals Button */}
-             <button
-               onClick={() => { handleClickSound(); setShowGoalModal(true); }}
-               className="p-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all active:scale-90"
-               title="Goals"
-             >
-               <Target size={20} />
-             </button>
-
-             {/* Settings Button */}
-             <button
-               onClick={() => { handleClickSound(); setShowSettings(true); }}
-               className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-lg transition-all active:scale-90"
-               title="Settings"
-             >
-               <Settings size={20} />
-             </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
-        
-        {/* Top Stats Cards */}
-        <StatsComponent stats={stats} currency={currency} language={language} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-1 space-y-6">
-             <TransactionForm 
-                onAddTransaction={addTransaction} 
-                onUpdateTransaction={updateTransaction}
-                editingTransaction={editingTransaction}
-                onCancelEdit={handleCancelEdit}
-                currencySymbol={currentCurrencySymbol} 
+            <div className="lg:col-span-2 space-y-6 animate-slideUp" style={{ animationDelay: '300ms' }}>
+              <ExpenseChart transactions={mainTransactions} currency={currency} language={language} darkMode={darkMode} />
+              <TransactionList 
+                transactions={mainTransactions} 
+                onDelete={deleteTransaction} 
+                onEdit={handleEditTransaction}
+                currency={currency} 
                 language={language}
-                incomeCategories={incomeCategories}
-                expenseCategories={expenseCategories}
-                savingsCategories={savingsCategories}
                 soundEnabled={soundEnabled}
-             />
-             <AISuggestion transactions={mainTransactions} stats={stats} language={language} currency={currency} />
+              />
+            </div>
           </div>
-
-          <div className="lg:col-span-2 space-y-6 animate-slideUp" style={{ animationDelay: '300ms' }}>
-            <ExpenseChart transactions={mainTransactions} currency={currency} language={language} darkMode={darkMode} />
-            <TransactionList 
-              transactions={mainTransactions} 
-              onDelete={deleteTransaction} 
-              onEdit={handleEditTransaction}
-              currency={currency} 
-              language={language}
-              soundEnabled={soundEnabled}
-            />
-          </div>
-
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

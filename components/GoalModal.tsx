@@ -7,29 +7,24 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   goals: Goal[];
-  totalSavings: number; // New Prop
+  totalSavings: number; 
   onAddGoal: (name: string, targetAmount: number, category: string, isFixedDeposit?: boolean) => void;
   onUpdateGoal: (id: string, name: string, targetAmount: number, category: string, isFixedDeposit?: boolean) => void;
   onDeleteGoal: (id: string) => void;
-  // Goal Ops
   onAddFunds: (goalId: string, amount: number) => void;
   onWithdrawFunds: (goalId: string, amount: number) => void;
-  // General Ops
   onGeneralDeposit: (amount: number) => void;
   onGeneralWithdraw: (amount: number) => void;
-  
   language: Language;
   currency: string;
   soundEnabled: boolean;
   savingsCategories: string[];
 }
 
-// Internal Component for Animated Progress Bar
 const ProgressBar = ({ percent, isCompleted, isFD }: { percent: number; isCompleted: boolean; isFD?: boolean }) => {
   const [width, setWidth] = useState(0);
 
   useEffect(() => {
-    // Small delay to trigger CSS transition on mount/update
     const timer = setTimeout(() => {
       setWidth(percent);
     }, 100);
@@ -46,7 +41,6 @@ const ProgressBar = ({ percent, isCompleted, isFD }: { percent: number; isComple
         className={`h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden ${colorClass}`}
         style={{ width: `${Math.min(100, width)}%` }}
       >
-        {/* Shimmer effect */}
         <div className="absolute top-0 left-0 bottom-0 right-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-shimmer" />
       </div>
     </div>
@@ -78,14 +72,18 @@ export const GoalModal: React.FC<Props> = ({
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
 
+  // Confirmation States
+  const [confirmState, setConfirmState] = useState<{
+    type: 'delete' | 'breakFD' | 'update';
+    id?: string;
+    payload?: any; 
+  } | null>(null);
+
   const t = TRANSLATIONS[language].goals;
   const tCommon = TRANSLATIONS[language].common;
-
-  // Calculate General (Unallocated) Savings
   const allocatedSavings = goals.reduce((sum, g) => sum + g.savedAmount, 0);
   const generalSavings = Math.max(0, totalSavings - allocatedSavings);
 
-  // Add keyframe style for shimmer
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
@@ -108,7 +106,6 @@ export const GoalModal: React.FC<Props> = ({
     if (soundEnabled) playSound('click');
   };
 
-  // Formatting helper
   const formatNumber = (value: string) => {
     const raw = value.replace(/[^0-9.]/g, '');
     if (!raw) return '';
@@ -136,12 +133,18 @@ export const GoalModal: React.FC<Props> = ({
     }
   };
 
-  const handleUpdateGoal = (e: React.FormEvent) => {
+  const handleUpdateGoalRequest = (e: React.FormEvent) => {
     e.preventDefault();
+    setConfirmState({ type: 'update' });
+    if (soundEnabled) playSound('click');
+  };
+
+  const confirmUpdate = () => {
     const target = parseFloat(newGoalTarget.replace(/,/g, ''));
     if (selectedGoalId && newGoalName && target > 0) {
       onUpdateGoal(selectedGoalId, newGoalName, target, newGoalCategory, isFixedDeposit);
       resetForm();
+      setConfirmState(null);
       if (soundEnabled) playSound('click');
     }
   };
@@ -149,7 +152,6 @@ export const GoalModal: React.FC<Props> = ({
   const handleDeposit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount.replace(/,/g, ''));
-
     if (parsedAmount <= 0) return;
 
     if (selectedGoalId === 'GENERAL') {
@@ -162,7 +164,6 @@ export const GoalModal: React.FC<Props> = ({
     const goal = goals.find(g => g.id === selectedGoalId);
     if (selectedGoalId && goal) {
       onAddFunds(selectedGoalId, parsedAmount);
-      
       const newTotal = goal.savedAmount + parsedAmount;
       if (newTotal >= goal.targetAmount && goal.savedAmount < goal.targetAmount) {
          if (soundEnabled) setTimeout(() => playSound('celebration'), 300);
@@ -176,7 +177,6 @@ export const GoalModal: React.FC<Props> = ({
   const handleWithdraw = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount.replace(/,/g, ''));
-    
     if (parsedAmount <= 0) return;
 
     if (selectedGoalId === 'GENERAL') {
@@ -196,16 +196,23 @@ export const GoalModal: React.FC<Props> = ({
         alert("Insufficient funds in this goal.");
         return;
       }
-      
       if (goal.isFixedDeposit) {
-          if (!confirm(t.breakFdConfirm)) {
-              return;
-          }
+          setConfirmState({ type: 'breakFD', payload: { id: selectedGoalId, amount: parsedAmount } });
+          return;
       }
 
       onWithdrawFunds(selectedGoalId, parsedAmount);
       resetForm();
-      if (soundEnabled) playSound('delete'); // Using delete sound for withdrawal effect
+      if (soundEnabled) playSound('delete'); 
+    }
+  };
+
+  const confirmBreakFD = () => {
+    if (confirmState?.payload) {
+       onWithdrawFunds(confirmState.payload.id, confirmState.payload.amount);
+       resetForm();
+       setConfirmState(null);
+       if (soundEnabled) playSound('delete');
     }
   };
 
@@ -217,6 +224,7 @@ export const GoalModal: React.FC<Props> = ({
       setSelectedGoalId(null);
       setAmount('');
       setView('list');
+      setConfirmState(null);
   };
 
   const openDeposit = (goalId: string) => {
@@ -241,9 +249,15 @@ export const GoalModal: React.FC<Props> = ({
     setView('edit');
   };
 
-  const deleteGoal = (id: string) => {
-    if (confirm(t.deleteConfirm)) {
-      onDeleteGoal(id);
+  const handleDeleteRequest = (id: string) => {
+    setConfirmState({ type: 'delete', id });
+    if (soundEnabled) playSound('click');
+  };
+
+  const confirmDelete = () => {
+    if (confirmState?.id) {
+      onDeleteGoal(confirmState.id);
+      setConfirmState(null);
       if (soundEnabled) playSound('delete');
     }
   };
@@ -264,12 +278,12 @@ export const GoalModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose} />
       
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md relative z-10 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 transition-colors">
+      <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md relative z-10 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 transition-colors border border-white/20 dark:border-white/10">
         
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-blue-50/50 dark:bg-blue-900/20">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-blue-50/30 dark:bg-blue-900/10">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg">
               <Target size={22} />
@@ -287,9 +301,9 @@ export const GoalModal: React.FC<Props> = ({
             <div className="space-y-4">
               
               {/* General Savings Card */}
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl p-5 shadow-sm">
+              <div className="bg-gradient-to-br from-indigo-50/80 to-blue-50/80 dark:from-indigo-900/30 dark:to-blue-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl p-5 shadow-sm">
                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 bg-white dark:bg-slate-800 rounded-lg text-indigo-600 dark:text-indigo-400 shadow-sm">
+                    <div className="p-2 bg-white/60 dark:bg-slate-800/60 rounded-lg text-indigo-600 dark:text-indigo-400 shadow-sm">
                         <Wallet size={20} />
                     </div>
                     <div>
@@ -303,7 +317,7 @@ export const GoalModal: React.FC<Props> = ({
                  <div className="flex gap-2">
                     <button
                         onClick={() => openWithdraw('GENERAL')}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-800 transition-all"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-800 transition-all"
                     >
                         <ArrowDownLeft size={14} />
                         {t.withdrawBtn}
@@ -331,7 +345,7 @@ export const GoalModal: React.FC<Props> = ({
                   const categoryName = goal.category ? getLocalizedCategory(goal.category, language) : '';
                   
                   return (
-                    <div key={goal.id} className="bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl p-4 shadow-sm relative overflow-hidden group">
+                    <div key={goal.id} className="bg-white/50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600 rounded-xl p-4 shadow-sm relative overflow-hidden group hover:bg-white/80 dark:hover:bg-slate-700/50 transition-colors">
                       {isCompleted && (
                         <div className="absolute top-0 right-0 p-2 text-yellow-500 opacity-20 rotate-12">
                             <Trophy size={64} />
@@ -367,7 +381,7 @@ export const GoalModal: React.FC<Props> = ({
                                 <Pencil size={16} />
                             </button>
                             <button 
-                                onClick={() => deleteGoal(goal.id)}
+                                onClick={() => handleDeleteRequest(goal.id)}
                                 className="text-slate-400 hover:text-rose-500 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-600 rounded-lg transition-colors"
                             >
                                 <Trash2 size={16} />
@@ -375,7 +389,6 @@ export const GoalModal: React.FC<Props> = ({
                         </div>
                       </div>
 
-                      {/* Animated Progress Bar */}
                       <ProgressBar percent={percent} isCompleted={isCompleted} isFD={isFD} />
                       
                       <div className="flex justify-between items-center relative z-10">
@@ -384,7 +397,6 @@ export const GoalModal: React.FC<Props> = ({
                         </span>
                         
                         <div className="flex gap-2">
-                            {/* Withdraw Button */}
                             <button
                                 onClick={() => openWithdraw(goal.id)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
@@ -393,7 +405,6 @@ export const GoalModal: React.FC<Props> = ({
                                 <ArrowDownLeft size={14} />
                             </button>
 
-                            {/* Deposit Button */}
                             <button
                                 onClick={() => openDeposit(goal.id)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
@@ -417,9 +428,8 @@ export const GoalModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Create OR Edit Goal Form */}
           {(view === 'create' || view === 'edit') && (
-            <form onSubmit={view === 'create' ? handleCreateGoal : handleUpdateGoal} className="space-y-4 animate-in slide-in-from-right-8 duration-200">
+            <form onSubmit={view === 'create' ? handleCreateGoal : handleUpdateGoalRequest} className="space-y-4 animate-in slide-in-from-right-8 duration-200">
                <h4 className="font-bold text-slate-800 dark:text-white text-lg text-center mb-2">
                   {view === 'create' ? t.create : t.edit}
               </h4>
@@ -436,7 +446,6 @@ export const GoalModal: React.FC<Props> = ({
                 />
               </div>
               
-              {/* Category Select */}
               <div>
                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.category}</label>
                  <select
@@ -450,7 +459,6 @@ export const GoalModal: React.FC<Props> = ({
                  </select>
               </div>
 
-              {/* Fixed Deposit Toggle (Strictly under Category) */}
               <div 
                  className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800 cursor-pointer"
                  onClick={() => setIsFixedDeposit(!isFixedDeposit)}
@@ -599,9 +607,50 @@ export const GoalModal: React.FC<Props> = ({
               </div>
              </form>
           )}
-
         </div>
       </div>
+
+      {/* Reusable Confirmation Modal Overlay */}
+      {confirmState && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setConfirmState(null)} />
+          <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-sm relative z-20 p-6 animate-scaleIn duration-200 border border-white/20 dark:border-white/10">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                {confirmState.type === 'delete' ? t.deleteConfirm : 
+                 confirmState.type === 'breakFD' ? t.breakFdTitle : 
+                 'Update Goal?'}
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
+                {confirmState.type === 'delete' ? 'Are you sure you want to delete this goal?' :
+                 confirmState.type === 'breakFD' ? t.breakFdConfirm :
+                 'Are you sure you want to update this goal?'}
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setConfirmState(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-slate-700 dark:text-slate-200 font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all active:scale-95"
+                >
+                  {tCommon.cancel}
+                </button>
+                <button
+                  onClick={
+                    confirmState.type === 'delete' ? confirmDelete :
+                    confirmState.type === 'breakFD' ? confirmBreakFD :
+                    confirmUpdate
+                  }
+                  className="flex-1 py-2.5 px-4 rounded-xl text-white font-medium bg-rose-600 hover:bg-rose-700 transition-all shadow-sm active:scale-95"
+                >
+                  {tCommon.confirm}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

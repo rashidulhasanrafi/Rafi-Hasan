@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tracker } from './Tracker';
 import { ProfileManager } from './ProfileManager';
+import { SplashScreen } from './SplashScreen';
 import { Profile, Language } from '../types';
 import { Loader2 } from 'lucide-react';
 
@@ -12,6 +13,7 @@ const App: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Initialize App: Load profiles, settings, migrate old data if needed
   useEffect(() => {
@@ -276,37 +278,39 @@ const App: React.FC = () => {
 
   return (
     <>
-      <ProfileManager
-        isOpen={showProfileManager}
-        onClose={() => setShowProfileManager(false)}
-        profiles={profiles}
-        activeProfileId={activeProfileId}
-        onSwitchProfile={handleSwitchProfile}
-        onAddProfile={handleAddProfile}
-        onDeleteProfile={handleDeleteProfile}
-        language={language}
-        soundEnabled={soundEnabled}
-      />
-      
-      {/* 
-        The key={activeProfileId} ensures the Tracker component completely remounts 
-        when the profile changes, forcing it to reload data from the new profile's storage keys. 
-      */}
-      <Tracker 
-        key={activeProfileId}
-        profileId={activeProfileId}
-        profileName={activeProfile.name}
-        onOpenProfileManager={() => setShowProfileManager(true)}
-        language={language}
-        onLanguageChange={handleLanguageChange}
-        darkMode={darkMode}
-        toggleDarkMode={toggleDarkMode}
-        soundEnabled={soundEnabled}
-        toggleSound={toggleSound}
-        onClearAllData={handleClearAllData}
-        onExportData={handleExportData}
-        onImportData={handleImportData}
-      />
+      {showSplash ? (
+        <SplashScreen onFinish={() => setShowSplash(false)} soundEnabled={soundEnabled} />
+      ) : (
+        <>
+          <ProfileManager
+            isOpen={showProfileManager}
+            onClose={() => setShowProfileManager(false)}
+            profiles={profiles}
+            activeProfileId={activeProfileId}
+            onSwitchProfile={handleSwitchProfile}
+            onAddProfile={handleAddProfile}
+            onDeleteProfile={handleDeleteProfile}
+            language={language}
+            soundEnabled={soundEnabled}
+          />
+          
+          <Tracker 
+            key={activeProfileId}
+            profileId={activeProfileId}
+            profileName={activeProfile.name}
+            onOpenProfileManager={() => setShowProfileManager(true)}
+            language={language}
+            onLanguageChange={handleLanguageChange}
+            darkMode={darkMode}
+            toggleDarkMode={toggleDarkMode}
+            soundEnabled={soundEnabled}
+            toggleSound={toggleSound}
+            onClearAllData={handleClearAllData}
+            onExportData={handleExportData}
+            onImportData={handleImportData}
+          />
+        </>
+      )}
     </>
   );
 };

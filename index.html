@@ -40,6 +40,20 @@
               pulseSoft: {
                 '0%, 100%': { opacity: '1' },
                 '50%': { opacity: '0.7' },
+              },
+              // New Animations for Splash Screen
+              popOutUp: {
+                '0%': { transform: 'translate(-50%, 0) scale(0)', opacity: '0' },
+                '20%': { opacity: '1', transform: 'translate(-50%, -40px) scale(1)' },
+                '100%': { transform: 'translate(-50%, -120px) scale(0.8)', opacity: '0' }
+              },
+              bookPulse: {
+                '0%, 100%': { transform: 'scale(1)', filter: 'brightness(1)' },
+                '50%': { transform: 'scale(1.05)', filter: 'brightness(1.2)' }
+              },
+              logoReveal: {
+                '0%': { transform: 'scale(0.5)', opacity: '0', filter: 'blur(10px)' },
+                '100%': { transform: 'scale(1)', opacity: '1', filter: 'blur(0)' }
               }
             },
             animation: {
@@ -49,6 +63,10 @@
               scaleIn: 'scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
               float: 'float 3s ease-in-out infinite',
               pulseSoft: 'pulseSoft 2s ease-in-out infinite',
+              // Splash specific
+              popOutUp: 'popOutUp 2s ease-out forwards',
+              bookPulse: 'bookPulse 2s ease-in-out infinite',
+              logoReveal: 'logoReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
             }
           }
         }

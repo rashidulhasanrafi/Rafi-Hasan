@@ -20,7 +20,6 @@ interface Props {
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
-    // Expense
     case 'Food & Dining': return <Coffee size={18} />;
     case 'Rent & Housing': return <Home size={18} />;
     case 'Transportation': return <Bus size={18} />;
@@ -36,7 +35,6 @@ const getCategoryIcon = (category: string) => {
     case 'Taxes': return <Landmark size={18} />;
     case 'Debt Payments': return <CreditCard size={18} />;
     
-    // Income
     case 'Salary': return <DollarSign size={18} />;
     case 'Investments': return <TrendingUp size={18} />;
     case 'Gifts': return <Gift size={18} />;
@@ -48,7 +46,6 @@ const getCategoryIcon = (category: string) => {
     case 'Refunds': return <RotateCcw size={18} />;
     case 'Other Income': return <HelpCircle size={18} />;
 
-    // Savings
     case 'Emergency Fund': return <Shield size={18} />;
     case 'Bank Deposit': return <Landmark size={18} />;
     case 'DPS': return <Lock size={18} />;
@@ -63,7 +60,6 @@ const getCategoryIcon = (category: string) => {
     case 'Savings Withdrawal': return <ArrowDownLeft size={18} />;
     case 'Fixed Deposit': return <Lock size={18} />;
     
-    // Default for custom categories
     default: return <Tag size={18} />;
   }
 };
@@ -77,18 +73,17 @@ const getTypeStyles = (type: TransactionType, amount: number, excludeFromBalance
         sign: '+'
       };
     case TransactionType.SAVINGS:
-      // If amount is negative, it's a withdrawal from savings back to wallet
       if (amount < 0) {
         return {
           bg: 'bg-blue-100 dark:bg-blue-900/30',
           text: 'text-blue-600 dark:text-blue-400',
-          sign: '+' // Adds to wallet
+          sign: '+' 
         };
       }
       return {
         bg: 'bg-blue-100 dark:bg-blue-900/30',
         text: 'text-blue-600 dark:text-blue-400',
-        sign: excludeFromBalance ? '' : '-' // Deducts from wallet if not excluded
+        sign: excludeFromBalance ? '' : '-' 
       };
     case TransactionType.EXPENSE:
     default:
@@ -106,7 +101,6 @@ export const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdi
   const locale = language === 'bn' ? 'bn-BD' : 'en-US';
 
   const formatConvertedAmount = (amount: number, fromCurrency: string) => {
-    // Math.abs to ensure we format positive number, sign is handled manually
     const converted = convertAmount(Math.abs(amount), fromCurrency || 'USD', currency);
     return new Intl.NumberFormat(locale, {
       style: 'currency',
@@ -129,7 +123,7 @@ export const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdi
 
   if (transactions.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 text-center flex flex-col items-center justify-center min-h-[300px] transition-colors animate-fadeIn">
+      <div className="bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/30 dark:border-white/10 text-center flex flex-col items-center justify-center min-h-[300px] transition-colors animate-fadeIn">
         <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-full mb-3 animate-float">
           <ShoppingBag size={32} className="text-slate-300 dark:text-slate-500" />
         </div>
@@ -141,8 +135,8 @@ export const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdi
 
   return (
     <>
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden transition-all hover:shadow-md animate-scaleIn duration-500">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30">
+      <div className="bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 dark:border-white/10 overflow-hidden transition-all hover:shadow-xl animate-scaleIn duration-500">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-700/30">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-white">{t.title}</h3>
         </div>
         <div className="divide-y divide-slate-100 dark:divide-slate-700 max-h-[500px] overflow-y-auto">
@@ -151,7 +145,7 @@ export const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdi
              return (
               <div 
                 key={t.id} 
-                className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group animate-fadeIn"
+                className="p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors group animate-fadeIn"
                 style={{ animationDelay: `${Math.min(index * 50, 300)}ms`, animationFillMode: 'both' }}
               >
                 <div className="flex items-center gap-4">
@@ -201,9 +195,9 @@ export const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdi
       </div>
 
       {deleteId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm relative z-10 p-6 animate-scaleIn duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setDeleteId(null)} />
+          <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-sm relative z-20 p-6 animate-scaleIn duration-200 border border-white/20 dark:border-white/10">
             <div className="flex flex-col items-center text-center">
               <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4 animate-pulseSoft">
                 <AlertTriangle size={24} />
