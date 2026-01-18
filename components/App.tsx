@@ -1,4 +1,3 @@
-import PasswordGate from "./PasswordGate";
 import React, { useState, useEffect } from 'react';
 import { Tracker } from './Tracker';
 import { ProfileManager } from './ProfileManager';
@@ -274,7 +273,6 @@ const App: React.FC = () => {
   }
 
   return (
-  <PasswordGate>
     <>
       <ProfileManager
         isOpen={showProfileManager}
@@ -287,8 +285,12 @@ const App: React.FC = () => {
         language={language}
         soundEnabled={soundEnabled}
       />
-
-      <Tracker
+      
+      {/* 
+        The key={activeProfileId} ensures the Tracker component completely remounts 
+        when the profile changes, forcing it to reload data from the new profile's storage keys. 
+      */}
+      <Tracker 
         key={activeProfileId}
         profileId={activeProfileId}
         profileName={activeProfile.name}
@@ -304,6 +306,7 @@ const App: React.FC = () => {
         onImportData={handleImportData}
       />
     </>
-  </PasswordGate>
-);
+  );
+};
+
 export default App;
