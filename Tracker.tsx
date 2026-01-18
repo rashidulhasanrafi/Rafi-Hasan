@@ -1,5 +1,7 @@
+
+
 import React, { useState, useEffect } from 'react';
-import { Transaction, TransactionType, DashboardStats, CURRENCIES, Language, convertAmount, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES, TRANSLATIONS } from '../types';
+import { Transaction, TransactionType, DashboardStats, CURRENCIES, Language, convertAmount, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SAVINGS_CATEGORIES, TRANSLATIONS } from '../types';
 import { DashboardStats as StatsComponent } from './DashboardStats';
 import { TransactionForm } from './TransactionForm';
 import { TransactionList } from './TransactionList';
@@ -46,15 +48,17 @@ export const Tracker: React.FC<Props> = ({
   const CURRENCY_STORAGE_KEY = `zenfinance_currency_${profileId}`;
   const INCOME_CAT_STORAGE_KEY = `zenfinance_income_categories_${profileId}`;
   const EXPENSE_CAT_STORAGE_KEY = `zenfinance_expense_categories_${profileId}`;
+  const SAVINGS_CAT_STORAGE_KEY = `zenfinance_savings_categories_${profileId}`;
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({ totalIncome: 0, totalExpense: 0, balance: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ totalIncome: 0, totalExpense: 0, totalSavings: 0, balance: 0 });
   const [currency, setCurrency] = useState('USD');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   
   // Category State
   const [incomeCategories, setIncomeCategories] = useState<string[]>(DEFAULT_INCOME_CATEGORIES);
   const [expenseCategories, setExpenseCategories] = useState<string[]>(DEFAULT_EXPENSE_CATEGORIES);
+  const [savingsCategories, setSavingsCategories] = useState<string[]>(DEFAULT_SAVINGS_CATEGORIES);
   
   // Modal States
   const [showSettings, setShowSettings] = useState(false);
@@ -68,6 +72,7 @@ export const Tracker: React.FC<Props> = ({
     const savedTransactions = localStorage.getItem(STORAGE_KEY);
     const savedIncomeCats = localStorage.getItem(INCOME_CAT_STORAGE_KEY);
     const savedExpenseCats = localStorage.getItem(EXPENSE_CAT_STORAGE_KEY);
+    const savedSavingsCats = localStorage.getItem(SAVINGS_CAT_STORAGE_KEY);
 
     if (savedCurrency) setCurrency(savedCurrency);
 
@@ -89,6 +94,7 @@ export const Tracker: React.FC<Props> = ({
     
     setIncomeCategories(savedIncomeCats ? JSON.parse(savedIncomeCats) : DEFAULT_INCOME_CATEGORIES);
     setExpenseCategories(savedExpenseCats ? JSON.parse(savedExpenseCats) : DEFAULT_EXPENSE_CATEGORIES);
+    setSavingsCategories(savedSavingsCats ? JSON.parse(savedSavingsCats) : DEFAULT_SAVINGS_CATEGORIES);
     setEditingTransaction(null); // Clear editing state on profile switch
 
   }, [profileId]); // Crucial: reload when profileId changes
@@ -106,10 +112,20 @@ export const Tracker: React.FC<Props> = ({
       .filter(t => t.type === TransactionType.EXPENSE)
       .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currency), 0);
 
+    const totalSavings = transactions
+      .filter(t => t.type === TransactionType.SAVINGS)
+      .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currency), 0);
+
+    // Deducted Savings are only those that are meant to reduce the current cash balance
+    const deductedSavings = transactions
+      .filter(t => t.type === TransactionType.SAVINGS && !t.excludeFromBalance)
+      .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currency), 0);
+
     setStats({
       totalIncome: income,
       totalExpense: expense,
-      balance: income - expense
+      totalSavings: totalSavings,
+      balance: income - expense - deductedSavings
     });
   }, [transactions, currency, profileId]);
 
@@ -122,6 +138,10 @@ export const Tracker: React.FC<Props> = ({
     localStorage.setItem(EXPENSE_CAT_STORAGE_KEY, JSON.stringify(expenseCategories));
   }, [expenseCategories, profileId]);
 
+  useEffect(() => {
+    localStorage.setItem(SAVINGS_CAT_STORAGE_KEY, JSON.stringify(savingsCategories));
+  }, [savingsCategories, profileId]);
+
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
     localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
@@ -129,7 +149,7 @@ export const Tracker: React.FC<Props> = ({
     setShowCurrencyModal(false);
   };
 
-  const addTransaction = (amount: number, category: string, note: string, type: TransactionType, date: string) => {
+  const addTransaction = (amount: number, category: string, note: string, type: TransactionType, date: string, excludeFromBalance?: boolean) => {
     const newTransaction: Transaction = {
       id: crypto.randomUUID(),
       amount,
@@ -137,15 +157,16 @@ export const Tracker: React.FC<Props> = ({
       note,
       type,
       currency: currency,
-      date: date // Use the selected date
+      date: date, // Use the selected date
+      excludeFromBalance: type === TransactionType.SAVINGS ? excludeFromBalance : false
     };
     setTransactions(prev => [newTransaction, ...prev]);
   };
 
-  const updateTransaction = (id: string, amount: number, category: string, note: string, type: TransactionType, date: string) => {
+  const updateTransaction = (id: string, amount: number, category: string, note: string, type: TransactionType, date: string, excludeFromBalance?: boolean) => {
     setTransactions(prev => prev.map(t => 
       t.id === id 
-        ? { ...t, amount, category, note, type, date } 
+        ? { ...t, amount, category, note, type, date, excludeFromBalance: type === TransactionType.SAVINGS ? excludeFromBalance : false } 
         : t
     ));
     setEditingTransaction(null);
@@ -173,6 +194,8 @@ export const Tracker: React.FC<Props> = ({
   const handleAddCategory = (type: TransactionType, name: string) => {
     if (type === TransactionType.INCOME) {
       setIncomeCategories(prev => [...prev, name]);
+    } else if (type === TransactionType.SAVINGS) {
+      setSavingsCategories(prev => [...prev, name]);
     } else {
       setExpenseCategories(prev => [...prev, name]);
     }
@@ -181,6 +204,8 @@ export const Tracker: React.FC<Props> = ({
   const handleRemoveCategory = (type: TransactionType, name: string) => {
     if (type === TransactionType.INCOME) {
       setIncomeCategories(prev => prev.filter(c => c !== name));
+    } else if (type === TransactionType.SAVINGS) {
+      setSavingsCategories(prev => prev.filter(c => c !== name));
     } else {
       setExpenseCategories(prev => prev.filter(c => c !== name));
     }
@@ -207,6 +232,7 @@ export const Tracker: React.FC<Props> = ({
         onClose={() => setShowSettings(false)}
         incomeCategories={incomeCategories}
         expenseCategories={expenseCategories}
+        savingsCategories={savingsCategories}
         onAddCategory={handleAddCategory}
         onRemoveCategory={handleRemoveCategory}
         language={language}
@@ -218,6 +244,7 @@ export const Tracker: React.FC<Props> = ({
         onClearAllData={onClearAllData}
         onExportData={onExportData}
         onImportData={onImportData}
+        onOpenShare={() => { setShowSettings(false); setShowShareModal(true); }}
       />
 
       <ShareModal 
@@ -228,6 +255,7 @@ export const Tracker: React.FC<Props> = ({
         profileName={profileName}
         currency={currency}
         language={language}
+        soundEnabled={soundEnabled}
       />
 
       <CalculatorModal
@@ -354,6 +382,7 @@ export const Tracker: React.FC<Props> = ({
                 language={language}
                 incomeCategories={incomeCategories}
                 expenseCategories={expenseCategories}
+                savingsCategories={savingsCategories}
                 soundEnabled={soundEnabled}
              />
              <AISuggestion transactions={transactions} stats={stats} language={language} currency={currency} />

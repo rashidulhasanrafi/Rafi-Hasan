@@ -152,9 +152,11 @@ const App: React.FC = () => {
 
     // Cleanup data for deleted profile
     localStorage.removeItem(`zenfinance_transactions_${id}`);
+    localStorage.removeItem(`zenfinance_goals_${id}`); // Clean goals
     localStorage.removeItem(`zenfinance_currency_${id}`);
     localStorage.removeItem(`zenfinance_income_categories_${id}`);
     localStorage.removeItem(`zenfinance_expense_categories_${id}`);
+    localStorage.removeItem(`zenfinance_savings_categories_${id}`);
 
     if (activeProfileId === id) {
       handleSwitchProfile(updatedProfiles[0].id);
@@ -169,9 +171,9 @@ const App: React.FC = () => {
     
     setTimeout(() => {
         if (activeProfileId) {
-            // ONLY Clear transactions for the current profile
-            // We keep the profile itself, categories, and app settings
+            // ONLY Clear transactions and goals for the current profile
             localStorage.removeItem(`zenfinance_transactions_${activeProfileId}`);
+            localStorage.removeItem(`zenfinance_goals_${activeProfileId}`);
         }
         
         // Reload to reset state effectively

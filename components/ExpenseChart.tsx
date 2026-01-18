@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts';
-import { Transaction, TransactionType, TRANSLATIONS, Language, convertAmount } from '../types';
+import { Transaction, TransactionType, TRANSLATIONS, Language, convertAmount, getLocalizedCategory } from '../types';
 
 interface Props {
   transactions: Transaction[];
@@ -12,12 +12,12 @@ interface Props {
 const COLORS = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4'];
 
 const renderActiveShape = (props: any) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value, percent, currency, darkMode } = props;
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, value, percent, currency, darkMode, language } = props;
 
   return (
     <g>
       <text x={cx} y={cy - 10} dy={8} textAnchor="middle" fill={darkMode ? "#e2e8f0" : "#1e293b"} className="text-sm font-medium">
-        {payload.name}
+        {getLocalizedCategory(payload.name, language)}
       </text>
       <text x={cx} y={cy + 10} dy={8} textAnchor="middle" fill={darkMode ? "#94a3b8" : "#64748b"} className="text-xs">
         {`${(percent * 100).toFixed(0)}%`}
@@ -97,7 +97,7 @@ export const ExpenseChart: React.FC<Props> = ({ transactions, currency, language
           <PieChart>
             <Pie
               activeIndex={activeIndex}
-              activeShape={(props) => renderActiveShape({ ...props, currency, darkMode })}
+              activeShape={(props) => renderActiveShape({ ...props, currency, darkMode, language })}
               data={expenseData}
               cx="50%"
               cy="50%"
@@ -122,7 +122,7 @@ export const ExpenseChart: React.FC<Props> = ({ transactions, currency, language
            <div key={entry.name} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-default" onMouseEnter={() => setActiveIndex(index)}>
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{entry.name}</p>
+                <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{getLocalizedCategory(entry.name, language)}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(entry.value)}</p>
               </div>
            </div>

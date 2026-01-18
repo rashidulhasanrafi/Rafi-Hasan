@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { TransactionType, TRANSLATIONS, Language } from '../types';
-import { X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard } from 'lucide-react';
+import { TransactionType, TRANSLATIONS, Language, getLocalizedCategory } from '../types';
+import { X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard, Share2 } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { safeCopy } from '../utils/clipboard';
 
@@ -10,6 +10,7 @@ interface Props {
   // Category Props
   incomeCategories: string[];
   expenseCategories: string[];
+  savingsCategories: string[];
   onAddCategory: (type: TransactionType, name: string) => void;
   onRemoveCategory: (type: TransactionType, name: string) => void;
   // General Props
@@ -23,6 +24,7 @@ interface Props {
   onClearAllData: () => void;
   onExportData: () => void;
   onImportData: (file: File) => void;
+  onOpenShare: () => void;
 }
 
 type MainTab = 'general' | 'categories';
@@ -32,6 +34,7 @@ export const CategorySettings: React.FC<Props> = ({
   onClose,
   incomeCategories,
   expenseCategories,
+  savingsCategories,
   onAddCategory,
   onRemoveCategory,
   language,
@@ -42,7 +45,8 @@ export const CategorySettings: React.FC<Props> = ({
   toggleSound,
   onClearAllData,
   onExportData,
-  onImportData
+  onImportData,
+  onOpenShare
 }) => {
   const [mainTab, setMainTab] = useState<MainTab>('general');
   const [categoryTab, setCategoryTab] = useState<TransactionType>(TransactionType.EXPENSE);
@@ -75,7 +79,11 @@ export const CategorySettings: React.FC<Props> = ({
     e.preventDefault();
     if (!newCategory.trim()) return;
     
-    const list = categoryTab === TransactionType.EXPENSE ? expenseCategories : incomeCategories;
+    let list: string[] = [];
+    if (categoryTab === TransactionType.EXPENSE) list = expenseCategories;
+    else if (categoryTab === TransactionType.INCOME) list = incomeCategories;
+    else list = savingsCategories;
+
     if (list.includes(newCategory.trim())) {
       alert(t.exists);
       return;
@@ -116,9 +124,6 @@ export const CategorySettings: React.FC<Props> = ({
     playClick();
     // Copy to clipboard immediately as backup (if app not installed)
     await safeCopy("01570222989");
-    
-    // We let the default anchor link behavior proceed (target="_blank")
-    // This will try to open WhatsApp application if installed, or browser if not.
   };
 
   const confirmDeleteCategory = () => {
@@ -152,6 +157,12 @@ export const CategorySettings: React.FC<Props> = ({
       playDeleteSound();
       onClearAllData();
       setConfirmClearOpen(false);
+  };
+
+  const getCurrentCategories = () => {
+    if (categoryTab === TransactionType.INCOME) return incomeCategories;
+    if (categoryTab === TransactionType.SAVINGS) return savingsCategories;
+    return expenseCategories;
   };
 
   return (
@@ -199,6 +210,21 @@ export const CategorySettings: React.FC<Props> = ({
           <div className="flex-1 overflow-y-auto">
             {mainTab === 'general' ? (
               <div className="p-4 space-y-6">
+                
+                {/* Share & Export Link (New) */}
+                <div 
+                  onClick={() => { playClick(); onOpenShare(); }}
+                  className="flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors border border-indigo-100 dark:border-indigo-800"
+                >
+                   <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 rounded-lg">
+                         <Share2 size={18} />
+                      </div>
+                      <span className="font-medium text-indigo-900 dark:text-indigo-100">{t.shareExport}</span>
+                   </div>
+                   <ArrowLeft size={16} className="rotate-180 text-indigo-400" />
+                </div>
+
                 {/* Appearance */}
                 <div>
                   <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">{t.appearance}</h4>
@@ -357,7 +383,7 @@ export const CategorySettings: React.FC<Props> = ({
                 <div className="flex p-4 gap-2">
                   <button
                     onClick={() => { playClick(); setCategoryTab(TransactionType.EXPENSE); }}
-                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                       categoryTab === TransactionType.EXPENSE
                         ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                         : 'bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
@@ -367,7 +393,7 @@ export const CategorySettings: React.FC<Props> = ({
                   </button>
                   <button
                     onClick={() => { playClick(); setCategoryTab(TransactionType.INCOME); }}
-                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                       categoryTab === TransactionType.INCOME
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                         : 'bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
@@ -375,14 +401,24 @@ export const CategorySettings: React.FC<Props> = ({
                   >
                     {t.incomeTab}
                   </button>
+                  <button
+                    onClick={() => { playClick(); setCategoryTab(TransactionType.SAVINGS); }}
+                    className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
+                      categoryTab === TransactionType.SAVINGS
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+                    }`}
+                  >
+                    {t.savingsTab}
+                  </button>
                 </div>
 
                 {/* List */}
                 <div className="flex-1 overflow-y-auto px-4 pb-4">
                   <div className="space-y-2">
-                    {(categoryTab === TransactionType.EXPENSE ? expenseCategories : incomeCategories).map((cat) => (
+                    {getCurrentCategories().map((cat) => (
                       <div key={cat} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg group">
-                        <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">{cat}</span>
+                        <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">{getLocalizedCategory(cat, language)}</span>
                         <button
                           onClick={() => { playClick(); setDeleteInfo({ type: categoryTab, name: cat }); }}
                           className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all p-1"
