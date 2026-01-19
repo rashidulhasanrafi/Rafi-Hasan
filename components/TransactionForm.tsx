@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Transaction, TransactionType, TRANSLATIONS, Language, getLocalizedCategory, convertAmount } from '../types';
-import { PlusCircle, Save, XCircle, Clipboard, CheckCircle2, Circle, AlertTriangle } from 'lucide-react';
+import { 
+  PlusCircle, Save, XCircle, Clipboard, CheckCircle2, Circle, AlertTriangle, ChevronDown,
+  Coffee, Home, Bus, Zap, ShoppingBag, Stethoscope, GraduationCap, DollarSign, 
+  TrendingUp, Gift, Briefcase, HelpCircle, Plane, Shield, RefreshCw, Smile, Heart, Landmark, 
+  Percent, Award, Building2, RotateCcw, CreditCard, Tag, PiggyBank, Coins, Banknote, Gem, 
+  BarChart3, Lock, ArrowDownLeft, Wallet
+} from 'lucide-react';
 import { playSound } from '../utils/sound';
 
 interface Props {
@@ -16,6 +22,52 @@ interface Props {
   savingsCategories: string[];
   soundEnabled: boolean;
 }
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case 'Food & Dining': return <Coffee size={18} />;
+    case 'Rent & Housing': return <Home size={18} />;
+    case 'Transportation': return <Bus size={18} />;
+    case 'Utilities': return <Zap size={18} />;
+    case 'Shopping': return <ShoppingBag size={18} />;
+    case 'Healthcare': return <Stethoscope size={18} />;
+    case 'Education': return <GraduationCap size={18} />;
+    case 'Travel': return <Plane size={18} />;
+    case 'Insurance': return <Shield size={18} />;
+    case 'Subscriptions': return <RefreshCw size={18} />;
+    case 'Personal Care': return <Smile size={18} />;
+    case 'Gifts & Donations': return <Heart size={18} />;
+    case 'Taxes': return <Landmark size={18} />;
+    case 'Debt Payments': return <CreditCard size={18} />;
+    
+    case 'Salary': return <DollarSign size={18} />;
+    case 'Investments': return <TrendingUp size={18} />;
+    case 'Gifts': return <Gift size={18} />;
+    case 'Freelance': return <Briefcase size={18} />;
+    case 'Dividends': return <Percent size={18} />;
+    case 'Royalties': return <Award size={18} />;
+    case 'Grants': return <Landmark size={18} />;
+    case 'Rental Income': return <Building2 size={18} />;
+    case 'Refunds': return <RotateCcw size={18} />;
+    case 'Other Income': return <HelpCircle size={18} />;
+
+    case 'Emergency Fund': return <Shield size={18} />;
+    case 'Bank Deposit': return <Landmark size={18} />;
+    case 'DPS': return <Lock size={18} />;
+    case 'Investments': return <BarChart3 size={18} />;
+    case 'Gold': return <Gem size={18} />;
+    case 'Stocks': return <TrendingUp size={18} />;
+    case 'Cash Savings': return <Banknote size={18} />;
+    case 'Crypto': return <Coins size={18} />;
+    case 'Retirement': return <Home size={18} />;
+    case 'Goal Saving': return <PiggyBank size={18} />;
+    case 'General Savings': return <Wallet size={18} />;
+    case 'Savings Withdrawal': return <ArrowDownLeft size={18} />;
+    case 'Fixed Deposit': return <Lock size={18} />;
+    
+    default: return <Tag size={18} />;
+  }
+};
 
 export const TransactionForm: React.FC<Props> = ({ 
   onAddTransaction,
@@ -36,6 +88,7 @@ export const TransactionForm: React.FC<Props> = ({
   const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
   const [deductFromBalance, setDeductFromBalance] = useState(true);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
   
@@ -193,6 +246,36 @@ export const TransactionForm: React.FC<Props> = ({
     }
   };
 
+  // Theme colors for Category Dropdown
+  const getThemeColors = (tType: TransactionType) => {
+    switch (tType) {
+        case TransactionType.INCOME:
+            return {
+                bg: 'bg-emerald-50 dark:bg-emerald-900/10',
+                border: 'border-emerald-100 dark:border-emerald-900/30',
+                iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+                iconText: 'text-emerald-600 dark:text-emerald-400',
+            };
+        case TransactionType.SAVINGS:
+            return {
+                bg: 'bg-blue-50 dark:bg-blue-900/10',
+                border: 'border-blue-100 dark:border-blue-900/30',
+                iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+                iconText: 'text-blue-600 dark:text-blue-400',
+            };
+        case TransactionType.EXPENSE:
+        default:
+            return {
+                bg: 'bg-rose-50 dark:bg-rose-900/10',
+                border: 'border-rose-100 dark:border-rose-900/30',
+                iconBg: 'bg-rose-100 dark:bg-rose-900/30',
+                iconText: 'text-rose-600 dark:text-rose-400',
+            };
+    }
+  };
+
+  const theme = getThemeColors(type);
+
   return (
     <>
       <div className={`bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border ${editingTransaction ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-white/30 dark:border-white/10'} p-6 rounded-2xl shadow-lg h-fit transition-all duration-300 animate-slideUp`}>
@@ -298,17 +381,52 @@ export const TransactionForm: React.FC<Props> = ({
             />
           </div>
 
-          <div className="group">
+          <div className="group relative">
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors">{t.category}</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-2.5 bg-white/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:outline-none transition-all text-slate-800 dark:text-white appearance-none"
+            
+            <button 
+                type="button"
+                onClick={() => { if(soundEnabled) playSound('click'); setShowCategoryDropdown(!showCategoryDropdown); }}
+                className={`w-full p-2.5 text-left border rounded-lg flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${theme.bg} ${theme.border} dark:text-white`}
             >
-              {getCategories(type).map((cat) => (
-                <option key={cat} value={cat}>{getLocalizedCategory(cat, language)}</option>
-              ))}
-            </select>
+                <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${theme.iconBg} ${theme.iconText}`}>
+                        {getCategoryIcon(category)}
+                    </div>
+                    <span className="text-slate-800 dark:text-slate-100 font-medium">
+                        {getLocalizedCategory(category, language)}
+                    </span>
+                </div>
+                <ChevronDown size={16} className={`text-slate-400 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showCategoryDropdown && (
+                <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowCategoryDropdown(false)} />
+                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-[250px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                        {getCategories(type).map(cat => (
+                            <div 
+                                key={cat}
+                                onClick={() => { 
+                                    setCategory(cat); 
+                                    setShowCategoryDropdown(false); 
+                                    if(soundEnabled) playSound('click'); 
+                                }}
+                                className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${
+                                    cat === category ? theme.bg : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                }`}
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${theme.iconBg} ${theme.iconText}`}>
+                                    {getCategoryIcon(cat)}
+                                </div>
+                                <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">
+                                    {getLocalizedCategory(cat, language)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
           </div>
 
           <div className="group">

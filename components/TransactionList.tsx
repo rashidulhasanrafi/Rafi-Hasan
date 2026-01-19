@@ -170,7 +170,7 @@ export const TransactionList: React.FC<Props> = ({ transactions, onDelete, onEdi
                     {formatConvertedAmount(t.amount, t.currency)}
                   </span>
                   
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform translate-x-2 group-hover:translate-x-0">
+                  <div className="flex gap-1">
                     <button 
                         onClick={() => onEdit(t)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 transition-colors active:scale-90"

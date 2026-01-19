@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TransactionType, TRANSLATIONS, Language, getLocalizedCategory } from '../types';
-import { X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard, Share2, LogOut, LogIn, User } from 'lucide-react';
+import { 
+  X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, 
+  Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard, Share2, LogOut, 
+  LogIn, User, Coffee, Home, Bus, Zap, ShoppingBag, Stethoscope, GraduationCap, DollarSign, 
+  TrendingUp, Gift, Briefcase, HelpCircle, Plane, Shield, RefreshCw, Smile, Heart, Landmark, 
+  Percent, Award, Building2, RotateCcw, CreditCard, Tag, PiggyBank, Coins, Banknote, Gem, 
+  BarChart3, Lock, ArrowDownLeft, Wallet
+} from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { safeCopy } from '../utils/clipboard';
 
@@ -31,6 +38,52 @@ interface Props {
   isGuest?: boolean;
   userEmail?: string;
 }
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case 'Food & Dining': return <Coffee size={18} />;
+    case 'Rent & Housing': return <Home size={18} />;
+    case 'Transportation': return <Bus size={18} />;
+    case 'Utilities': return <Zap size={18} />;
+    case 'Shopping': return <ShoppingBag size={18} />;
+    case 'Healthcare': return <Stethoscope size={18} />;
+    case 'Education': return <GraduationCap size={18} />;
+    case 'Travel': return <Plane size={18} />;
+    case 'Insurance': return <Shield size={18} />;
+    case 'Subscriptions': return <RefreshCw size={18} />;
+    case 'Personal Care': return <Smile size={18} />;
+    case 'Gifts & Donations': return <Heart size={18} />;
+    case 'Taxes': return <Landmark size={18} />;
+    case 'Debt Payments': return <CreditCard size={18} />;
+    
+    case 'Salary': return <DollarSign size={18} />;
+    case 'Investments': return <TrendingUp size={18} />;
+    case 'Gifts': return <Gift size={18} />;
+    case 'Freelance': return <Briefcase size={18} />;
+    case 'Dividends': return <Percent size={18} />;
+    case 'Royalties': return <Award size={18} />;
+    case 'Grants': return <Landmark size={18} />;
+    case 'Rental Income': return <Building2 size={18} />;
+    case 'Refunds': return <RotateCcw size={18} />;
+    case 'Other Income': return <HelpCircle size={18} />;
+
+    case 'Emergency Fund': return <Shield size={18} />;
+    case 'Bank Deposit': return <Landmark size={18} />;
+    case 'DPS': return <Lock size={18} />;
+    case 'Investments': return <BarChart3 size={18} />;
+    case 'Gold': return <Gem size={18} />;
+    case 'Stocks': return <TrendingUp size={18} />;
+    case 'Cash Savings': return <Banknote size={18} />;
+    case 'Crypto': return <Coins size={18} />;
+    case 'Retirement': return <Home size={18} />;
+    case 'Goal Saving': return <PiggyBank size={18} />;
+    case 'General Savings': return <Wallet size={18} />;
+    case 'Savings Withdrawal': return <ArrowDownLeft size={18} />;
+    case 'Fixed Deposit': return <Lock size={18} />;
+    
+    default: return <Tag size={18} />;
+  }
+};
 
 export const CategorySettings: React.FC<Props> = ({
   isOpen,
@@ -191,6 +244,39 @@ export const CategorySettings: React.FC<Props> = ({
   // Title based on mode
   const modalTitle = isGeneralMode ? t.title : (language === 'bn' ? 'বিভাগ পরিচালনা' : 'Manage Categories');
   const HeaderIcon = isGeneralMode ? Settings : LayoutGrid;
+
+  // Helper for Theme Colors
+  const getThemeColors = (type: TransactionType) => {
+    switch (type) {
+        case TransactionType.INCOME:
+            return {
+                bg: 'bg-emerald-50 dark:bg-emerald-900/10',
+                border: 'border-emerald-100 dark:border-emerald-900/30',
+                iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+                iconText: 'text-emerald-600 dark:text-emerald-400',
+                tabActive: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 shadow-sm'
+            };
+        case TransactionType.SAVINGS:
+            return {
+                bg: 'bg-blue-50 dark:bg-blue-900/10',
+                border: 'border-blue-100 dark:border-blue-900/30',
+                iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+                iconText: 'text-blue-600 dark:text-blue-400',
+                tabActive: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm'
+            };
+        case TransactionType.EXPENSE:
+        default:
+            return {
+                bg: 'bg-rose-50 dark:bg-rose-900/10',
+                border: 'border-rose-100 dark:border-rose-900/30',
+                iconBg: 'bg-rose-100 dark:bg-rose-900/30',
+                iconText: 'text-rose-600 dark:text-rose-400',
+                tabActive: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 shadow-sm'
+            };
+    }
+  };
+
+  const theme = getThemeColors(categoryTab);
 
   return (
     <>
@@ -398,23 +484,35 @@ export const CategorySettings: React.FC<Props> = ({
               </div>
             ) : (
               <div className="p-4">
-                {/* Category Sub-Tabs */}
+                {/* Category Sub-Tabs with Dynamic Theme Colors */}
                 <div className="flex bg-slate-100/80 dark:bg-slate-700/50 p-1 rounded-xl mb-4">
                   <button 
                     onClick={() => { playClick(); setCategoryTab(TransactionType.INCOME); }}
-                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${categoryTab === TransactionType.INCOME ? 'bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+                        categoryTab === TransactionType.INCOME 
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 shadow-sm' 
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
                   >
                     {t.incomeTab}
                   </button>
                   <button 
                     onClick={() => { playClick(); setCategoryTab(TransactionType.EXPENSE); }}
-                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${categoryTab === TransactionType.EXPENSE ? 'bg-white dark:bg-slate-600 text-rose-600 dark:text-rose-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+                        categoryTab === TransactionType.EXPENSE 
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 shadow-sm' 
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
                   >
                     {t.expenseTab}
                   </button>
                   <button 
                     onClick={() => { playClick(); setCategoryTab(TransactionType.SAVINGS); }}
-                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${categoryTab === TransactionType.SAVINGS ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+                        categoryTab === TransactionType.SAVINGS 
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm' 
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
                   >
                     {t.savingsTab}
                   </button>
@@ -443,22 +541,39 @@ export const CategorySettings: React.FC<Props> = ({
                   <button 
                     type="submit"
                     disabled={!newCategory.trim()}
-                    className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 rounded-lg transition-colors flex items-center justify-center"
+                    className={`text-white px-4 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
+                        categoryTab === TransactionType.INCOME ? 'bg-emerald-600 hover:bg-emerald-700' :
+                        categoryTab === TransactionType.EXPENSE ? 'bg-rose-600 hover:bg-rose-700' :
+                        'bg-blue-600 hover:bg-blue-700'
+                    }`}
                   >
                     <Plus size={20} />
                   </button>
                 </form>
 
                 {/* Category List */}
-                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                  {getCurrentCategories().map((cat) => (
-                    <div key={cat} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl hover:border-slate-300 dark:hover:border-slate-600 transition-colors group">
-                      <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">
-                        {getLocalizedCategory(cat, language)}
-                      </span>
+                <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                  {getCurrentCategories().map((cat, index) => (
+                    <div 
+                        key={cat} 
+                        className={`flex items-center justify-between p-3 rounded-xl border transition-colors group animate-fadeIn ${
+                            theme.bg
+                        } ${
+                            theme.border
+                        }`}
+                        style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+                    >
+                      <div className="flex items-center gap-3">
+                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${theme.iconBg} ${theme.iconText}`}>
+                            {getCategoryIcon(cat)}
+                         </div>
+                         <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">
+                           {getLocalizedCategory(cat, language)}
+                         </span>
+                      </div>
                       <button 
                         onClick={() => { playClick(); setDeleteInfo({ type: categoryTab, name: cat }); }}
-                        className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        className="text-slate-400 hover:text-rose-500 p-2 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>

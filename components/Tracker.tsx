@@ -4,13 +4,14 @@ import { DashboardStats as StatsComponent } from './DashboardStats';
 import { TransactionForm } from './TransactionForm';
 import { TransactionList } from './TransactionList';
 import { ExpenseChart } from './ExpenseChart';
+import { CalendarView } from './CalendarView';
 import { AISuggestion } from './AISuggestion';
 import { CategorySettings } from './CategorySettings';
 import { ShareModal } from './ShareModal';
 import { CalculatorModal } from './CalculatorModal';
 import { GoalModal } from './GoalModal';
 import { ProfileManager } from './ProfileManager';
-import { NotebookPen, Check, X, LogOut, UserCircle, LogIn, User } from 'lucide-react';
+import { NotebookPen, Check, X, LogOut, UserCircle, LogIn, User, Calendar, PieChart } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { supabase } from '../utils/supabase';
 
@@ -198,6 +199,7 @@ export const Tracker: React.FC<Props> = ({
   const [currency, setCurrency] = useState('BDT');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'chart' | 'calendar'>('chart');
   
   const [incomeCategories, setIncomeCategories] = useState<string[]>(DEFAULT_INCOME_CATEGORIES);
   const [expenseCategories, setExpenseCategories] = useState<string[]>(DEFAULT_EXPENSE_CATEGORIES);
@@ -711,7 +713,33 @@ export const Tracker: React.FC<Props> = ({
             </div>
 
             <div className="lg:col-span-2 space-y-6 animate-slideUp" style={{ animationDelay: '300ms' }}>
-              <ExpenseChart transactions={transactions} currency={currency} language={language} darkMode={darkMode} />
+              
+              {/* View Switcher: Chart vs Calendar */}
+              <div className="flex justify-end">
+                <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 inline-flex">
+                  <button
+                    onClick={() => { setViewMode('chart'); handleClickSound(); }}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'chart' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    title="Pie Chart View"
+                  >
+                    <PieChart size={20} />
+                  </button>
+                  <button
+                    onClick={() => { setViewMode('calendar'); handleClickSound(); }}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    title="Calendar View"
+                  >
+                    <Calendar size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {viewMode === 'chart' ? (
+                <ExpenseChart transactions={transactions} currency={currency} language={language} darkMode={darkMode} />
+              ) : (
+                <CalendarView transactions={transactions} currency={currency} language={language} />
+              )}
+
               <TransactionList 
                 transactions={transactions} 
                 onDelete={deleteTransaction} 

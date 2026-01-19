@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Goal, TRANSLATIONS, Language, getLocalizedCategory } from '../types';
-import { X, Target, Plus, Trash2, Coins, Trophy, Pencil, Lock, ArrowDownLeft, AlertTriangle, Wallet } from 'lucide-react';
+import { X, Target, Plus, Trash2, Coins, Trophy, Pencil, Lock, ArrowDownLeft, AlertTriangle, Wallet, Settings } from 'lucide-react';
 import { playSound } from '../utils/sound';
 
 interface Props {
@@ -74,7 +74,7 @@ export const GoalModal: React.FC<Props> = ({
 
   // Confirmation States
   const [confirmState, setConfirmState] = useState<{
-    type: 'delete' | 'breakFD' | 'update';
+    type: 'delete' | 'redirectEditFD' | 'update';
     id?: string;
     payload?: any; 
   } | null>(null);
@@ -196,8 +196,11 @@ export const GoalModal: React.FC<Props> = ({
         alert("Insufficient funds in this goal.");
         return;
       }
+      
+      // NEW LOGIC: Check for Fixed Deposit status
       if (goal.isFixedDeposit) {
-          setConfirmState({ type: 'breakFD', payload: { id: selectedGoalId, amount: parsedAmount } });
+          setConfirmState({ type: 'redirectEditFD', id: selectedGoalId });
+          if (soundEnabled) playSound('click'); // Alert sound
           return;
       }
 
@@ -207,12 +210,22 @@ export const GoalModal: React.FC<Props> = ({
     }
   };
 
-  const confirmBreakFD = () => {
-    if (confirmState?.payload) {
-       onWithdrawFunds(confirmState.payload.id, confirmState.payload.amount);
-       resetForm();
-       setConfirmState(null);
-       if (soundEnabled) playSound('delete');
+  const confirmRedirectToEdit = () => {
+    if (confirmState?.id) {
+       const goal = goals.find(g => g.id === confirmState.id);
+       if (goal) {
+           // Pre-fill the edit form with the goal's data
+           setSelectedGoalId(goal.id);
+           setNewGoalName(goal.name);
+           setNewGoalTarget(formatNumber(goal.targetAmount.toString()));
+           setNewGoalCategory(goal.category || savingsCategories[0] || 'Goal Saving');
+           setIsFixedDeposit(true); // Is currently true, user needs to toggle it off
+           
+           // Close modal and switch view
+           setConfirmState(null);
+           setView('edit');
+           if (soundEnabled) playSound('click');
+       }
     }
   };
 
@@ -357,8 +370,8 @@ export const GoalModal: React.FC<Props> = ({
                           <div className="flex items-center gap-2 flex-wrap">
                              <h4 className="font-bold text-slate-800 dark:text-white text-lg">{goal.name}</h4>
                              {isFD && (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                                    FD
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                                    <Lock size={8} /> FD
                                 </span>
                              )}
                              {categoryName && !isFD && (
@@ -373,7 +386,7 @@ export const GoalModal: React.FC<Props> = ({
                              {t.target}: {formatCurrency(goal.targetAmount)}
                           </div>
                         </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1">
                             <button 
                                 onClick={() => openEdit(goal)}
                                 className="text-slate-400 hover:text-indigo-500 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-600 rounded-lg transition-colors"
@@ -460,15 +473,24 @@ export const GoalModal: React.FC<Props> = ({
               </div>
 
               <div 
-                 className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800 cursor-pointer"
+                 className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                    isFixedDeposit 
+                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' 
+                    : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600'
+                 }`}
                  onClick={() => setIsFixedDeposit(!isFixedDeposit)}
               >
-                 <div className={`p-1 rounded-full border-2 transition-colors ${isFixedDeposit ? 'bg-amber-500 border-amber-500' : 'bg-transparent border-slate-400'}`}>
+                 <div className={`p-1.5 rounded-full border-2 transition-colors flex items-center justify-center ${isFixedDeposit ? 'bg-amber-500 border-amber-500' : 'bg-transparent border-slate-400'}`}>
                      {isFixedDeposit && <Lock size={12} className="text-white" />}
                  </div>
                  <div className="flex-1">
-                     <p className="font-semibold text-sm text-amber-900 dark:text-amber-100">{t.isFixedDeposit}</p>
-                     <p className="text-xs text-amber-700 dark:text-amber-300/70 leading-tight mt-0.5">{t.fdDesc}</p>
+                     <p className="font-semibold text-sm text-slate-800 dark:text-white flex items-center justify-between">
+                        {t.isFixedDeposit}
+                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${isFixedDeposit ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-600'}`}>
+                            {isFixedDeposit ? 'Active' : 'Off'}
+                        </span>
+                     </p>
+                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight mt-0.5">{t.fdDesc}</p>
                  </div>
               </div>
 
@@ -556,10 +578,10 @@ export const GoalModal: React.FC<Props> = ({
              <form onSubmit={handleWithdraw} className="space-y-4 animate-in slide-in-from-right-8 duration-200">
                <div className="text-center mb-6">
                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${currentGoal?.isFixedDeposit ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'}`}>
-                   {currentGoal?.isFixedDeposit ? <AlertTriangle size={24} /> : <ArrowDownLeft size={24} />}
+                   {currentGoal?.isFixedDeposit ? <Lock size={24} /> : <ArrowDownLeft size={24} />}
                  </div>
                  <h4 className="font-bold text-slate-800 dark:text-white text-lg">
-                    {currentGoal?.isFixedDeposit ? t.breakFdTitle : t.withdrawTitle}
+                    {t.withdrawTitle}
                  </h4>
                  <p className="text-sm text-slate-500 dark:text-slate-400">
                    {currentGoal?.name}
@@ -568,12 +590,6 @@ export const GoalModal: React.FC<Props> = ({
                     {t.saved}: {formatCurrency(currentGoal?.savedAmount || 0)}
                  </p>
                </div>
-
-               {currentGoal?.isFixedDeposit && (
-                   <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200 text-center mb-2">
-                       {t.breakFdConfirm}
-                   </div>
-               )}
 
                <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t.withdrawBtn} ({currency})</label>
@@ -602,7 +618,7 @@ export const GoalModal: React.FC<Props> = ({
                   type="submit"
                   className="flex-1 py-3 text-white font-medium bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors shadow-lg shadow-rose-200 dark:shadow-none"
                 >
-                  {currentGoal?.isFixedDeposit ? 'Break & Withdraw' : t.withdrawBtn}
+                  {t.withdrawBtn}
                 </button>
               </div>
              </form>
@@ -616,18 +632,18 @@ export const GoalModal: React.FC<Props> = ({
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setConfirmState(null)} />
           <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-sm relative z-20 p-6 animate-scaleIn duration-200 border border-white/20 dark:border-white/10">
             <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4">
-                <AlertTriangle size={24} />
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${confirmState.type === 'redirectEditFD' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                {confirmState.type === 'redirectEditFD' ? <Lock size={24} /> : <AlertTriangle size={24} />}
               </div>
               <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
                 {confirmState.type === 'delete' ? t.deleteConfirm : 
-                 confirmState.type === 'breakFD' ? t.breakFdTitle : 
-                 'Update Goal?'}
+                 confirmState.type === 'redirectEditFD' ? (language === 'bn' ? 'ফিক্সড ডিপোজিট লক' : 'Fund Locked (FD)') : 
+                 (language === 'bn' ? 'তহবিল আপডেট?' : 'Update Goal?')}
               </h3>
               <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
-                {confirmState.type === 'delete' ? 'Are you sure you want to delete this goal?' :
-                 confirmState.type === 'breakFD' ? t.breakFdConfirm :
-                 'Are you sure you want to update this goal?'}
+                {confirmState.type === 'delete' ? (language === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই লক্ষ্যটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this goal?') :
+                 confirmState.type === 'redirectEditFD' ? (language === 'bn' ? 'টাকা তোলার জন্য আপনাকে সেটিংস থেকে ফিক্সড ডিপোজিট অপশনটি বন্ধ করতে হবে।' : 'You must disable the "Fixed Deposit" option in the settings before you can withdraw funds.') :
+                 (language === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি আপডেট করতে চান?' : 'Are you sure you want to update this goal?')}
               </p>
               <div className="flex gap-3 w-full">
                 <button
@@ -639,12 +655,14 @@ export const GoalModal: React.FC<Props> = ({
                 <button
                   onClick={
                     confirmState.type === 'delete' ? confirmDelete :
-                    confirmState.type === 'breakFD' ? confirmBreakFD :
+                    confirmState.type === 'redirectEditFD' ? confirmRedirectToEdit :
                     confirmUpdate
                   }
-                  className="flex-1 py-2.5 px-4 rounded-xl text-white font-medium bg-rose-600 hover:bg-rose-700 transition-all shadow-sm active:scale-95"
+                  className={`flex-1 py-2.5 px-4 rounded-xl text-white font-medium transition-all shadow-sm active:scale-95 ${confirmState.type === 'redirectEditFD' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-rose-600 hover:bg-rose-700'}`}
                 >
-                  {tCommon.confirm}
+                  {confirmState.type === 'redirectEditFD' 
+                    ? (language === 'bn' ? 'সেটিংস-এ যান' : 'Go to Settings') 
+                    : tCommon.confirm}
                 </button>
               </div>
             </div>
