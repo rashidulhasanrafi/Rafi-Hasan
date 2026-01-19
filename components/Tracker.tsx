@@ -10,12 +10,12 @@ import { ShareModal } from './ShareModal';
 import { CalculatorModal } from './CalculatorModal';
 import { GoalModal } from './GoalModal';
 import { ProfileManager } from './ProfileManager';
-import { NotebookPen, Check, X, LogOut, UserCircle } from 'lucide-react';
+import { NotebookPen, Check, X, LogOut, UserCircle, LogIn, User } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { supabase } from '../utils/supabase';
 
 interface Props {
-  userId: string; // Auth User ID
+  userId: string; // Auth User ID or 'guest'
   profileName: string;
   onLogout: () => void;
   language: Language;
@@ -157,6 +157,7 @@ export const Tracker: React.FC<Props> = ({
   onExportData,
   onImportData
 }) => {
+  const isGuest = userId === 'guest';
   
   // Profile State Logic
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -171,7 +172,7 @@ export const Tracker: React.FC<Props> = ({
     if (savedProfiles) {
       setProfiles(JSON.parse(savedProfiles));
     } else {
-      const defaultProfile = { id: 'default', name: 'Main' };
+      const defaultProfile = { id: 'default', name: isGuest ? 'Guest' : 'Main' };
       setProfiles([defaultProfile]);
       localStorage.setItem(`zenfinance_profiles_${userId}`, JSON.stringify([defaultProfile]));
     }
@@ -179,10 +180,10 @@ export const Tracker: React.FC<Props> = ({
     if (savedActiveId) {
       setActiveProfileId(savedActiveId);
     }
-  }, [userId]);
+  }, [userId, isGuest]);
 
   // Keys dependent on Active Profile
-  const STORAGE_KEY = `zenfinance_transactions_${userId}_${activeProfileId}`; // Kept for consistency, though unused for DB
+  const STORAGE_KEY = `zenfinance_transactions_${userId}_${activeProfileId}`; 
   const CURRENCY_STORAGE_KEY = `zenfinance_currency_${userId}_${activeProfileId}`;
   const INCOME_CAT_STORAGE_KEY = `zenfinance_income_categories_${userId}_${activeProfileId}`;
   const EXPENSE_CAT_STORAGE_KEY = `zenfinance_expense_categories_${userId}_${activeProfileId}`;
@@ -207,31 +208,42 @@ export const Tracker: React.FC<Props> = ({
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
-  // Fetch Transactions from Supabase (Filtered by Profile)
+  // Fetch Transactions from Supabase OR LocalStorage
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('date', { ascending: false });
+      if (isGuest) {
+        // Guest Mode: Load from Local Storage via STORAGE_KEY (simulating fetching)
+        const localData = localStorage.getItem(STORAGE_KEY);
+        if (localData) {
+            setTransactions(JSON.parse(localData));
+        } else {
+            setTransactions([]);
+        }
+      } else {
+        // Authenticated: Fetch from Supabase
+        const { data, error } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('date', { ascending: false });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data) {
-        const mappedTransactions: Transaction[] = data
-          .map((t: any) => ({
-            id: t.id,
-            amount: t.amount,
-            category: t.category,
-            note: t.note,
-            date: t.date,
-            type: t.type,
-            currency: t.currency,
-            excludeFromBalance: t.exclude_from_balance
-          }));
-        setTransactions(mappedTransactions);
+        if (data) {
+            const mappedTransactions: Transaction[] = data
+            .map((t: any) => ({
+                id: t.id,
+                amount: t.amount,
+                category: t.category,
+                note: t.note,
+                date: t.date,
+                type: t.type,
+                currency: t.currency,
+                excludeFromBalance: t.exclude_from_balance
+            }));
+            setTransactions(mappedTransactions);
+        }
       }
     } catch (err: any) {
       console.error('Error fetching transactions:', err.message || err);
@@ -301,8 +313,13 @@ export const Tracker: React.FC<Props> = ({
     }
   };
 
-  // Stats Calculation
+  // Stats Calculation & Guest Persistence
   useEffect(() => {
+    // For Guest Mode: Persist transactions to local storage whenever they change
+    if (isGuest) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+    }
+
     // Stats now dynamically convert transactions to the selected currency
     const income = transactions
       .filter(t => t.type === TransactionType.INCOME)
@@ -326,7 +343,7 @@ export const Tracker: React.FC<Props> = ({
       totalSavings: totalSavings,
       balance: income - expense - deductedSavings
     });
-  }, [transactions, currency]);
+  }, [transactions, currency, isGuest, STORAGE_KEY]);
 
   // Persist Local Settings
   useEffect(() => { localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals)); }, [goals, GOALS_STORAGE_KEY]);
@@ -345,8 +362,6 @@ export const Tracker: React.FC<Props> = ({
       savedAmount: convertAmount(g.savedAmount, g.currency, newCurrency)
     }));
     setGoals(updatedGoals);
-    // Note: We do NOT bulk update transactions in Supabase as they are historical records.
-    // The UI (TransactionList, Stats) handles conversion on the fly.
 
     setCurrency(newCurrency);
     localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
@@ -356,16 +371,18 @@ export const Tracker: React.FC<Props> = ({
 
   // CRUD
   const addTransaction = async (amount: number, category: string, note: string, type: TransactionType, date: string, excludeFromBalance?: boolean) => {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-        alert("Please login to save data");
-        return;
+    // Auth Check
+    if (!isGuest) {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            alert("Please login to save data");
+            return;
+        }
     }
 
     const newTransaction = {
       id: crypto.randomUUID(),
-      user_id: user.id,
+      user_id: isGuest ? 'guest' : userId, // Use authenticated user.id or 'guest'
       amount,
       category,
       note: note || '', 
@@ -379,14 +396,20 @@ export const Tracker: React.FC<Props> = ({
         ...newTransaction,
         excludeFromBalance: newTransaction.exclude_from_balance,
     };
+    
+    // Update local state immediately for both modes
     setTransactions(prev => [optimisticTrans, ...prev]);
 
-    const { error } = await supabase.from('transactions').insert([newTransaction]);
+    // If NOT guest, sync to Supabase
+    if (!isGuest) {
+        const { error } = await supabase.from('transactions').insert([newTransaction]);
 
-    if (error) {
-        console.error("Supabase insert error:", error);
-        setTransactions(prev => prev.filter(t => t.id !== newTransaction.id));
-        alert(`Error inserting transaction: ${error.message || JSON.stringify(error)}`);
+        if (error) {
+            console.error("Supabase insert error:", error);
+            // Revert on failure
+            setTransactions(prev => prev.filter(t => t.id !== newTransaction.id));
+            alert(`Error inserting transaction: ${error.message || JSON.stringify(error)}`);
+        }
     }
   };
 
@@ -397,7 +420,7 @@ export const Tracker: React.FC<Props> = ({
         note: note || '',
         type,
         date,
-        currency, // Update currency to current selected currency
+        currency, 
         exclude_from_balance: type === TransactionType.SAVINGS ? !!excludeFromBalance : false
     };
 
@@ -408,12 +431,14 @@ export const Tracker: React.FC<Props> = ({
     ));
     setEditingTransaction(null);
 
-    const { error } = await supabase.from('transactions').update(updates).eq('id', id).eq('user_id', userId);
+    if (!isGuest) {
+        const { error } = await supabase.from('transactions').update(updates).eq('id', id).eq('user_id', userId);
 
-    if (error) {
-        console.error("Error updating transaction:", error);
-        fetchTransactions();
-        alert(`Failed to update transaction: ${error.message || JSON.stringify(error)}`);
+        if (error) {
+            console.error("Error updating transaction:", error);
+            fetchTransactions(); // revert
+            alert(`Failed to update transaction: ${error.message || JSON.stringify(error)}`);
+        }
     }
   };
 
@@ -422,12 +447,14 @@ export const Tracker: React.FC<Props> = ({
     setTransactions(prev => prev.filter(t => t.id !== id));
     if (editingTransaction?.id === id) setEditingTransaction(null);
 
-    const { error } = await supabase.from('transactions').delete().eq('id', id).eq('user_id', userId);
+    if (!isGuest) {
+        const { error } = await supabase.from('transactions').delete().eq('id', id).eq('user_id', userId);
 
-    if (error) {
-        console.error("Error deleting transaction:", error);
-        setTransactions(backup);
-        alert(`Failed to delete transaction: ${error.message || JSON.stringify(error)}`);
+        if (error) {
+            console.error("Error deleting transaction:", error);
+            setTransactions(backup);
+            alert(`Failed to delete transaction: ${error.message || JSON.stringify(error)}`);
+        }
     }
   };
 
@@ -501,6 +528,7 @@ export const Tracker: React.FC<Props> = ({
           onImportData={onImportData}
           onOpenShare={() => { setShowSettings(false); setShowShareModal(true); }}
           onLogout={onLogout}
+          isGuest={isGuest}
         />
 
         <ProfileManager

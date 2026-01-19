@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TransactionType, TRANSLATIONS, Language, getLocalizedCategory } from '../types';
-import { X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard, Share2, LogOut } from 'lucide-react';
+import { X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard, Share2, LogOut, LogIn } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { safeCopy } from '../utils/clipboard';
 
@@ -28,6 +28,7 @@ interface Props {
   onOpenShare: () => void;
   // Auth
   onLogout: () => void;
+  isGuest?: boolean;
 }
 
 export const CategorySettings: React.FC<Props> = ({
@@ -49,7 +50,8 @@ export const CategorySettings: React.FC<Props> = ({
   onExportData,
   onImportData,
   onOpenShare,
-  onLogout
+  onLogout,
+  isGuest
 }) => {
   // If we are in 'categories' mode, we need sub-tabs for Inc/Exp/Sav.
   const [categoryTab, setCategoryTab] = useState<TransactionType>(TransactionType.EXPENSE);
@@ -165,7 +167,11 @@ export const CategorySettings: React.FC<Props> = ({
 
   const handleLogoutClick = () => {
       playClick();
-      setShowLogoutConfirm(true);
+      if (isGuest) {
+          onLogout(); // Directly logout/login redirect for guest
+      } else {
+          setShowLogoutConfirm(true);
+      }
   };
 
   const confirmLogout = () => {
@@ -346,13 +352,17 @@ export const CategorySettings: React.FC<Props> = ({
                 {/* Developer Info & Logout Section */}
                 <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center text-center gap-4">
                     
-                    {/* Logout Button */}
+                    {/* Logout/Login Button */}
                     <button
                         onClick={handleLogoutClick}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/40 transition-colors font-semibold shadow-sm"
+                        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-colors font-semibold shadow-sm ${
+                            isGuest 
+                            ? 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/40'
+                            : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/40'
+                        }`}
                     >
-                        <LogOut size={18} />
-                        {t.logout}
+                        {isGuest ? <LogIn size={18} /> : <LogOut size={18} />}
+                        {isGuest ? 'Login to Sync Data' : t.logout}
                     </button>
 
                     <div className="flex flex-col gap-2 mt-2">

@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { Loader2, LogIn, UserPlus, Lock, Mail, AlertTriangle } from 'lucide-react';
+import { Loader2, LogIn, UserPlus, Lock, Mail, AlertTriangle, User, Eye, EyeOff } from 'lucide-react';
 
-export const Auth: React.FC = () => {
+interface Props {
+  onGuestLogin?: () => void;
+}
+
+export const Auth: React.FC<Props> = ({ onGuestLogin }) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,13 +84,20 @@ export const Auth: React.FC = () => {
             <div className="relative">
               <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-3 bg-white/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white transition-all"
+                className="w-full pl-10 pr-12 py-3 bg-white/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white transition-all"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
@@ -114,6 +126,17 @@ export const Auth: React.FC = () => {
             )}
           </button>
         </form>
+
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+          <button
+            onClick={onGuestLogin}
+            type="button"
+            className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95"
+          >
+            <User size={20} />
+            Continue as Guest
+          </button>
+        </div>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-slate-500 dark:text-slate-400">
