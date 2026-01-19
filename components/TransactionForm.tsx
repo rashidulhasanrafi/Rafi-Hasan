@@ -278,7 +278,7 @@ export const TransactionForm: React.FC<Props> = ({
 
   return (
     <>
-      <div className={`bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border ${editingTransaction ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-white/30 dark:border-white/10'} p-6 rounded-2xl shadow-lg h-fit transition-all duration-300 animate-slideUp`}>
+      <div className={`bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border ${editingTransaction ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-white/30 dark:border-white/10'} p-6 rounded-2xl shadow-lg h-fit transition-all duration-300 animate-slideUp relative z-50`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
             {editingTransaction ? t.editTitle : t.title}

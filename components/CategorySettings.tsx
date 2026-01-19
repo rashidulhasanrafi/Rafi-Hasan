@@ -6,7 +6,7 @@ import {
   LogIn, User, Coffee, Home, Bus, Zap, ShoppingBag, Stethoscope, GraduationCap, DollarSign, 
   TrendingUp, Gift, Briefcase, HelpCircle, Plane, Shield, RefreshCw, Smile, Heart, Landmark, 
   Percent, Award, Building2, RotateCcw, CreditCard, Tag, PiggyBank, Coins, Banknote, Gem, 
-  BarChart3, Lock, ArrowDownLeft, Wallet
+  BarChart3, Lock, ArrowDownLeft, Wallet, Check, ChevronDown
 } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { safeCopy } from '../utils/clipboard';
@@ -85,6 +85,16 @@ const getCategoryIcon = (category: string) => {
   }
 };
 
+const LANGUAGES = [
+  { code: 'en', name: 'English', native: 'English', flag: '🇺🇸' },
+  { code: 'bn', name: 'Bengali', native: 'বাংলা', flag: '🇧🇩' },
+  { code: 'hi', name: 'Hindi', native: 'हिन्दी', flag: '🇮🇳' },
+  { code: 'fr', name: 'French', native: 'Français', flag: '🇫🇷' },
+  { code: 'es', name: 'Spanish', native: 'Español', flag: '🇪🇸' },
+  { code: 'de', name: 'German', native: 'Deutsch', flag: '🇩🇪' },
+  { code: 'ja', name: 'Japanese', native: '日本語', flag: '🇯🇵' },
+] as const;
+
 export const CategorySettings: React.FC<Props> = ({
   isOpen,
   onClose,
@@ -118,6 +128,9 @@ export const CategorySettings: React.FC<Props> = ({
   const [confirmRestoreOpen, setConfirmRestoreOpen] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
+  // Language Dropdown State
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const categoryInputRef = useRef<HTMLInputElement>(null);
@@ -352,27 +365,63 @@ export const CategorySettings: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* Localization */}
+                {/* Localization - Modern Dropdown */}
                 <div>
                    <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">{t.language}</h4>
                    
-                   <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
-                            <Globe size={18} />
+                   <div className="relative">
+                      <button 
+                          onClick={() => { playClick(); setShowLanguageDropdown(!showLanguageDropdown); }}
+                          className="w-full flex items-center justify-between p-3 bg-white dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl transition-all hover:border-indigo-300 dark:hover:border-indigo-500 group"
+                      >
+                          <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-600 flex items-center justify-center text-lg">
+                                  {LANGUAGES.find(l => l.code === language)?.flag}
+                              </div>
+                              <div className="text-left">
+                                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                      {LANGUAGES.find(l => l.code === language)?.native}
+                                  </p>
+                                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                      {LANGUAGES.find(l => l.code === language)?.name}
+                                  </p>
+                              </div>
                           </div>
-                          <span className="font-medium text-slate-700 dark:text-slate-200">{t.language}</span>
-                        </div>
-                        <select 
-                          value={language}
-                          onChange={(e) => { playClick(); onLanguageChange(e.target.value as Language); }}
-                          className="bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="en">English</option>
-                          <option value="bn">বাংলা</option>
-                        </select>
-                      </div>
+                          <ChevronDown size={18} className={`text-slate-400 transition-transform ${showLanguageDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showLanguageDropdown && (
+                          <>
+                              <div className="fixed inset-0 z-10" onClick={() => setShowLanguageDropdown(false)} />
+                              <div className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-[250px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                                  {LANGUAGES.map((lang) => (
+                                      <button
+                                          key={lang.code}
+                                          onClick={() => { 
+                                              playClick(); 
+                                              onLanguageChange(lang.code as Language); 
+                                              setShowLanguageDropdown(false); 
+                                          }}
+                                          className={`w-full flex items-center justify-between p-3 transition-colors ${
+                                              language === lang.code 
+                                              ? 'bg-indigo-50 dark:bg-indigo-900/20' 
+                                              : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                          }`}
+                                      >
+                                          <div className="flex items-center gap-3">
+                                              <div className="text-lg w-8 text-center">{lang.flag}</div>
+                                              <div className="text-left">
+                                                  <p className={`text-sm font-medium ${language === lang.code ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                      {lang.native}
+                                                  </p>
+                                              </div>
+                                          </div>
+                                          {language === lang.code && <Check size={16} className="text-indigo-600 dark:text-indigo-400" />}
+                                      </button>
+                                  ))}
+                              </div>
+                          </>
+                      )}
                    </div>
                 </div>
 
