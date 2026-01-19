@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TransactionType, TRANSLATIONS, Language, getLocalizedCategory } from '../types';
-import { X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard, Share2, LogOut, LogIn } from 'lucide-react';
+import { X, Plus, Settings, Trash2, AlertTriangle, Moon, Sun, Volume2, VolumeX, Globe, LayoutGrid, Sliders, MessageCircle, ArrowLeft, Download, Upload, Database, Clipboard, Share2, LogOut, LogIn, User } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { safeCopy } from '../utils/clipboard';
 
@@ -29,6 +29,7 @@ interface Props {
   // Auth
   onLogout: () => void;
   isGuest?: boolean;
+  userEmail?: string;
 }
 
 export const CategorySettings: React.FC<Props> = ({
@@ -51,7 +52,8 @@ export const CategorySettings: React.FC<Props> = ({
   onImportData,
   onOpenShare,
   onLogout,
-  isGuest
+  isGuest,
+  userEmail
 }) => {
   // If we are in 'categories' mode, we need sub-tabs for Inc/Exp/Sav.
   const [categoryTab, setCategoryTab] = useState<TransactionType>(TransactionType.EXPENSE);
@@ -352,6 +354,18 @@ export const CategorySettings: React.FC<Props> = ({
                 {/* Developer Info & Logout Section */}
                 <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center text-center gap-4">
                     
+                    {/* User Email Display (Only if logged in) */}
+                    {!isGuest && userEmail && (
+                        <div className="w-full flex items-center justify-center gap-2 p-2 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
+                            <div className="p-1.5 bg-white dark:bg-slate-600 rounded-full text-slate-500 dark:text-slate-300">
+                                <User size={14} />
+                            </div>
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-300 truncate max-w-[200px]">
+                                {userEmail}
+                            </span>
+                        </div>
+                    )}
+
                     {/* Logout/Login Button */}
                     <button
                         onClick={handleLogoutClick}

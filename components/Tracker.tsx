@@ -17,6 +17,7 @@ import { supabase } from '../utils/supabase';
 interface Props {
   userId: string; // Auth User ID or 'guest'
   profileName: string;
+  userEmail?: string;
   onLogout: () => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
@@ -146,6 +147,7 @@ const CustomCategoryIcon = () => (
 export const Tracker: React.FC<Props> = ({ 
   userId, 
   profileName, 
+  userEmail,
   onLogout,
   language,
   onLanguageChange,
@@ -529,6 +531,7 @@ export const Tracker: React.FC<Props> = ({
           onOpenShare={() => { setShowSettings(false); setShowShareModal(true); }}
           onLogout={onLogout}
           isGuest={isGuest}
+          userEmail={userEmail}
         />
 
         <ProfileManager

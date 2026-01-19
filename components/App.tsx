@@ -209,6 +209,7 @@ const App: React.FC = () => {
 
   const userId = session ? session.user.id : 'guest';
   const profileName = session ? (session.user.email?.split('@')[0] || 'User') : 'Guest';
+  const userEmail = session?.user?.email;
 
   return (
     <>
@@ -219,6 +220,7 @@ const App: React.FC = () => {
           key={userId} 
           userId={userId} 
           profileName={profileName}
+          userEmail={userEmail}
           onLogout={handleLogout} 
           language={language}
           onLanguageChange={handleLanguageChange}
