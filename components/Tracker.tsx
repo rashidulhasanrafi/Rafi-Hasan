@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Transaction, TransactionType, DashboardStats, CURRENCIES, Language, convertAmount, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SAVINGS_CATEGORIES, TRANSLATIONS, Goal, EXCHANGE_RATES } from '../types';
+import { Transaction, TransactionType, DashboardStats, CURRENCIES, Language, convertAmount, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_SAVINGS_CATEGORIES, TRANSLATIONS, Goal, EXCHANGE_RATES, Profile } from '../types';
 import { DashboardStats as StatsComponent } from './DashboardStats';
 import { TransactionForm } from './TransactionForm';
 import { TransactionList } from './TransactionList';
@@ -9,13 +9,15 @@ import { CategorySettings } from './CategorySettings';
 import { ShareModal } from './ShareModal';
 import { CalculatorModal } from './CalculatorModal';
 import { GoalModal } from './GoalModal';
-import { NotebookPen, Check, X } from 'lucide-react';
+import { ProfileManager } from './ProfileManager';
+import { NotebookPen, Check, X, LogOut, UserCircle } from 'lucide-react';
 import { playSound } from '../utils/sound';
+import { supabase } from '../utils/supabase';
 
 interface Props {
-  profileId: string;
+  userId: string; // Auth User ID
   profileName: string;
-  onOpenProfileManager: () => void;
+  onLogout: () => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
   darkMode: boolean;
@@ -28,7 +30,7 @@ interface Props {
   onImportData: (file: File) => void;
 }
 
-// Custom Currency Icon Component
+// Custom Icons
 const CurrencyIcon = () => (
   <div className="relative w-12 h-7 flex-shrink-0">
     <div className="absolute left-0 top-0.5 w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center border border-white dark:border-slate-800 shadow-sm z-10 transform -rotate-3">
@@ -43,7 +45,6 @@ const CurrencyIcon = () => (
   </div>
 );
 
-// Custom Wallet Icon
 const CustomWalletIcon = () => (
   <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -58,7 +59,6 @@ const CustomWalletIcon = () => (
   </div>
 );
 
-// Custom Profile Icon
 const CustomProfileIcon = () => (
     <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
         <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -83,7 +83,6 @@ const CustomProfileIcon = () => (
     </div>
 );
 
-// Custom Calculator Icon
 const CustomCalculatorIcon = () => (
   <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -101,7 +100,6 @@ const CustomCalculatorIcon = () => (
   </div>
 );
 
-// Custom Settings Icon (Perfect Circle Gear)
 const CustomSettingsIcon = () => (
   <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -120,23 +118,15 @@ const CustomSettingsIcon = () => (
            </filter>
         </defs>
         
-        {/* Outer Circle Ring */}
         <circle cx="24" cy="24" r="20" fill="url(#gearMetal)" stroke="#64748B" strokeWidth="2" />
-        
-        {/* Gear Teeth Ring */}
         <path d="M24 6V10M24 38V42M6 24H10M38 24H42M11.3 11.3L14.1 14.1M33.9 33.9L36.7 36.7M11.3 36.7L14.1 33.9M33.9 14.1L36.7 11.3" 
               stroke="#64748B" strokeWidth="4" strokeLinecap="round" />
-        
-        {/* Inner Body */}
         <circle cx="24" cy="24" r="14" fill="#F1F5F9" stroke="#64748B" strokeWidth="2" />
-        
-        {/* Center Blue Circle */}
         <circle cx="24" cy="24" r="6" fill="#3B82F6" stroke="#1D4ED8" strokeWidth="2" />
      </svg>
   </div>
 );
 
-// Custom Category Icon
 const CustomCategoryIcon = () => (
   <div className="w-10 h-10 relative drop-shadow-sm hover:scale-110 transition-transform">
      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -154,9 +144,9 @@ const CustomCategoryIcon = () => (
 );
 
 export const Tracker: React.FC<Props> = ({ 
-  profileId, 
+  userId, 
   profileName, 
-  onOpenProfileManager,
+  onLogout,
   language,
   onLanguageChange,
   darkMode,
@@ -167,18 +157,44 @@ export const Tracker: React.FC<Props> = ({
   onExportData,
   onImportData
 }) => {
-  const STORAGE_KEY = `zenfinance_transactions_${profileId}`;
-  const CURRENCY_STORAGE_KEY = `zenfinance_currency_${profileId}`;
-  const INCOME_CAT_STORAGE_KEY = `zenfinance_income_categories_${profileId}`;
-  const EXPENSE_CAT_STORAGE_KEY = `zenfinance_expense_categories_${profileId}`;
-  const SAVINGS_CAT_STORAGE_KEY = `zenfinance_savings_categories_${profileId}`;
-  const GOALS_STORAGE_KEY = `zenfinance_goals_${profileId}`;
+  
+  // Profile State Logic
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string>('default');
+  const [showProfileManager, setShowProfileManager] = useState(false);
+
+  // Initialize Profiles
+  useEffect(() => {
+    const savedProfiles = localStorage.getItem(`zenfinance_profiles_${userId}`);
+    const savedActiveId = localStorage.getItem(`zenfinance_active_profile_${userId}`);
+    
+    if (savedProfiles) {
+      setProfiles(JSON.parse(savedProfiles));
+    } else {
+      const defaultProfile = { id: 'default', name: 'Main' };
+      setProfiles([defaultProfile]);
+      localStorage.setItem(`zenfinance_profiles_${userId}`, JSON.stringify([defaultProfile]));
+    }
+
+    if (savedActiveId) {
+      setActiveProfileId(savedActiveId);
+    }
+  }, [userId]);
+
+  // Keys dependent on Active Profile
+  const STORAGE_KEY = `zenfinance_transactions_${userId}_${activeProfileId}`; // Kept for consistency, though unused for DB
+  const CURRENCY_STORAGE_KEY = `zenfinance_currency_${userId}_${activeProfileId}`;
+  const INCOME_CAT_STORAGE_KEY = `zenfinance_income_categories_${userId}_${activeProfileId}`;
+  const EXPENSE_CAT_STORAGE_KEY = `zenfinance_expense_categories_${userId}_${activeProfileId}`;
+  const SAVINGS_CAT_STORAGE_KEY = `zenfinance_savings_categories_${userId}_${activeProfileId}`;
+  const GOALS_STORAGE_KEY = `zenfinance_goals_${userId}_${activeProfileId}`;
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [stats, setStats] = useState<DashboardStats>({ totalIncome: 0, totalExpense: 0, totalSavings: 0, balance: 0 });
   const [currency, setCurrency] = useState('BDT');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [incomeCategories, setIncomeCategories] = useState<string[]>(DEFAULT_INCOME_CATEGORIES);
   const [expenseCategories, setExpenseCategories] = useState<string[]>(DEFAULT_EXPENSE_CATEGORIES);
@@ -191,32 +207,52 @@ export const Tracker: React.FC<Props> = ({
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
+  // Fetch Transactions from Supabase (Filtered by Profile)
+  const fetchTransactions = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedTransactions: Transaction[] = data
+          .map((t: any) => ({
+            id: t.id,
+            amount: t.amount,
+            category: t.category,
+            note: t.note,
+            date: t.date,
+            type: t.type,
+            currency: t.currency,
+            excludeFromBalance: t.exclude_from_balance
+          }));
+        setTransactions(mappedTransactions);
+      }
+    } catch (err: any) {
+      console.error('Error fetching transactions:', err.message || err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
+    // Load settings for this profile
     const savedCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY) || 'BDT';
-    const savedTransactions = localStorage.getItem(STORAGE_KEY);
-    const savedGoals = localStorage.getItem(GOALS_STORAGE_KEY);
+    setCurrency(savedCurrency);
+    
     const savedIncomeCats = localStorage.getItem(INCOME_CAT_STORAGE_KEY);
     const savedExpenseCats = localStorage.getItem(EXPENSE_CAT_STORAGE_KEY);
     const savedSavingsCats = localStorage.getItem(SAVINGS_CAT_STORAGE_KEY);
+    setIncomeCategories(savedIncomeCats ? JSON.parse(savedIncomeCats) : DEFAULT_INCOME_CATEGORIES);
+    setExpenseCategories(savedExpenseCats ? JSON.parse(savedExpenseCats) : DEFAULT_EXPENSE_CATEGORIES);
+    setSavingsCategories(savedSavingsCats ? JSON.parse(savedSavingsCats) : DEFAULT_SAVINGS_CATEGORIES);
 
-    setCurrency(savedCurrency);
-
-    if (savedTransactions) {
-      try {
-        const parsed: any[] = JSON.parse(savedTransactions);
-        const migrated = parsed.map(t => ({
-          ...t,
-          currency: t.currency || savedCurrency
-        }));
-        setTransactions(migrated);
-      } catch (e) {
-        console.error("Failed to parse transactions", e);
-        setTransactions([]);
-      }
-    } else {
-      setTransactions([]);
-    }
-
+    const savedGoals = localStorage.getItem(GOALS_STORAGE_KEY);
     if (savedGoals) {
       try {
         setGoals(JSON.parse(savedGoals));
@@ -226,32 +262,63 @@ export const Tracker: React.FC<Props> = ({
     } else {
       setGoals([]);
     }
-    
-    setIncomeCategories(savedIncomeCats ? JSON.parse(savedIncomeCats) : DEFAULT_INCOME_CATEGORIES);
-    setExpenseCategories(savedExpenseCats ? JSON.parse(savedExpenseCats) : DEFAULT_EXPENSE_CATEGORIES);
-    setSavingsCategories(savedSavingsCats ? JSON.parse(savedSavingsCats) : DEFAULT_SAVINGS_CATEGORIES);
-    setEditingTransaction(null); 
 
-  }, [profileId]);
+    setEditingTransaction(null);
+    fetchTransactions();
 
+  }, [userId, activeProfileId]); 
+
+  // Profile Management Handlers
+  const handleAddProfile = (name: string) => {
+    const newProfile = { id: crypto.randomUUID(), name };
+    const updated = [...profiles, newProfile];
+    setProfiles(updated);
+    localStorage.setItem(`zenfinance_profiles_${userId}`, JSON.stringify(updated));
+    setActiveProfileId(newProfile.id);
+    localStorage.setItem(`zenfinance_active_profile_${userId}`, newProfile.id);
+  };
+
+  const handleSwitchProfile = (id: string) => {
+    setActiveProfileId(id);
+    localStorage.setItem(`zenfinance_active_profile_${userId}`, id);
+  };
+
+  const handleEditProfile = (id: string, newName: string) => {
+    const updated = profiles.map(p => p.id === id ? { ...p, name: newName } : p);
+    setProfiles(updated);
+    localStorage.setItem(`zenfinance_profiles_${userId}`, JSON.stringify(updated));
+  };
+
+  const handleDeleteProfile = (id: string) => {
+    if (profiles.length <= 1) return;
+    const updated = profiles.filter(p => p.id !== id);
+    setProfiles(updated);
+    localStorage.setItem(`zenfinance_profiles_${userId}`, JSON.stringify(updated));
+    if (activeProfileId === id) {
+      const newActive = updated[0].id;
+      setActiveProfileId(newActive);
+      localStorage.setItem(`zenfinance_active_profile_${userId}`, newActive);
+    }
+  };
+
+  // Stats Calculation
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
-    
+    // Stats now dynamically convert transactions to the selected currency
     const income = transactions
       .filter(t => t.type === TransactionType.INCOME)
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currency), 0);
     
     const expense = transactions
       .filter(t => t.type === TransactionType.EXPENSE)
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currency), 0);
 
     const totalSavings = transactions
       .filter(t => t.type === TransactionType.SAVINGS)
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currency), 0);
 
     const deductedSavings = transactions
       .filter(t => t.type === TransactionType.SAVINGS && !t.excludeFromBalance)
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + convertAmount(t.amount, t.currency || 'USD', currency), 0);
 
     setStats({
       totalIncome: income,
@@ -259,219 +326,154 @@ export const Tracker: React.FC<Props> = ({
       totalSavings: totalSavings,
       balance: income - expense - deductedSavings
     });
-  }, [transactions, currency, profileId]);
+  }, [transactions, currency]);
 
-  useEffect(() => {
-    localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals));
-  }, [goals, profileId]);
-
-  useEffect(() => {
-    localStorage.setItem(INCOME_CAT_STORAGE_KEY, JSON.stringify(incomeCategories));
-  }, [incomeCategories, profileId]);
-
-  useEffect(() => {
-    localStorage.setItem(EXPENSE_CAT_STORAGE_KEY, JSON.stringify(expenseCategories));
-  }, [expenseCategories, profileId]);
-
-  useEffect(() => {
-    localStorage.setItem(SAVINGS_CAT_STORAGE_KEY, JSON.stringify(savingsCategories));
-  }, [savingsCategories, profileId]);
+  // Persist Local Settings
+  useEffect(() => { localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals)); }, [goals, GOALS_STORAGE_KEY]);
+  useEffect(() => { localStorage.setItem(INCOME_CAT_STORAGE_KEY, JSON.stringify(incomeCategories)); }, [incomeCategories, INCOME_CAT_STORAGE_KEY]);
+  useEffect(() => { localStorage.setItem(EXPENSE_CAT_STORAGE_KEY, JSON.stringify(expenseCategories)); }, [expenseCategories, EXPENSE_CAT_STORAGE_KEY]);
+  useEffect(() => { localStorage.setItem(SAVINGS_CAT_STORAGE_KEY, JSON.stringify(savingsCategories)); }, [savingsCategories, SAVINGS_CAT_STORAGE_KEY]);
 
   const handleCurrencyChange = (newCurrency: string) => {
-    if (newCurrency === currency) {
-      setShowCurrencyModal(false);
-      return;
-    }
-    const oldRate = EXCHANGE_RATES[currency] || 1;
-    const newRate = EXCHANGE_RATES[newCurrency] || 1;
-    const convert = (val: number) => (val / oldRate) * newRate;
-
-    const updatedTransactions = transactions.map(t => ({
-      ...t,
-      amount: convert(t.amount),
-      currency: newCurrency
-    }));
-
+    if (newCurrency === currency) { setShowCurrencyModal(false); return; }
+    
+    // Convert Goals to new currency so they are merged/accumulated correctly
     const updatedGoals = goals.map(g => ({
       ...g,
-      targetAmount: convert(g.targetAmount),
-      savedAmount: convert(g.savedAmount),
-      currency: newCurrency
+      currency: newCurrency,
+      targetAmount: convertAmount(g.targetAmount, g.currency, newCurrency),
+      savedAmount: convertAmount(g.savedAmount, g.currency, newCurrency)
     }));
-
-    setTransactions(updatedTransactions);
     setGoals(updatedGoals);
+    // Note: We do NOT bulk update transactions in Supabase as they are historical records.
+    // The UI (TransactionList, Stats) handles conversion on the fly.
+
     setCurrency(newCurrency);
     localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
     if (soundEnabled) playSound('click');
     setShowCurrencyModal(false);
   };
 
-  const addTransaction = (amount: number, category: string, note: string, type: TransactionType, date: string, excludeFromBalance?: boolean) => {
-    const newTransaction: Transaction = {
+  // CRUD
+  const addTransaction = async (amount: number, category: string, note: string, type: TransactionType, date: string, excludeFromBalance?: boolean) => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+        alert("Please login to save data");
+        return;
+    }
+
+    const newTransaction = {
       id: crypto.randomUUID(),
+      user_id: user.id,
       amount,
       category,
-      note,
+      note: note || '', 
       type,
       currency: currency,
       date: date,
-      excludeFromBalance: type === TransactionType.SAVINGS ? excludeFromBalance : false
+      exclude_from_balance: type === TransactionType.SAVINGS ? !!excludeFromBalance : false
     };
-    setTransactions(prev => [newTransaction, ...prev]);
+
+    const optimisticTrans: Transaction = {
+        ...newTransaction,
+        excludeFromBalance: newTransaction.exclude_from_balance,
+    };
+    setTransactions(prev => [optimisticTrans, ...prev]);
+
+    const { error } = await supabase.from('transactions').insert([newTransaction]);
+
+    if (error) {
+        console.error("Supabase insert error:", error);
+        setTransactions(prev => prev.filter(t => t.id !== newTransaction.id));
+        alert(`Error inserting transaction: ${error.message || JSON.stringify(error)}`);
+    }
   };
 
-  const updateTransaction = (id: string, amount: number, category: string, note: string, type: TransactionType, date: string, excludeFromBalance?: boolean) => {
+  const updateTransaction = async (id: string, amount: number, category: string, note: string, type: TransactionType, date: string, excludeFromBalance?: boolean) => {
+    const updates = {
+        amount,
+        category,
+        note: note || '',
+        type,
+        date,
+        currency, // Update currency to current selected currency
+        exclude_from_balance: type === TransactionType.SAVINGS ? !!excludeFromBalance : false
+    };
+
     setTransactions(prev => prev.map(t => 
       t.id === id 
-        ? { ...t, amount, category, note, type, date, excludeFromBalance: type === TransactionType.SAVINGS ? excludeFromBalance : false } 
+        ? { ...t, ...updates, excludeFromBalance: updates.exclude_from_balance } 
         : t
     ));
     setEditingTransaction(null);
+
+    const { error } = await supabase.from('transactions').update(updates).eq('id', id).eq('user_id', userId);
+
+    if (error) {
+        console.error("Error updating transaction:", error);
+        fetchTransactions();
+        alert(`Failed to update transaction: ${error.message || JSON.stringify(error)}`);
+    }
   };
 
-  const deleteTransaction = (id: string) => {
+  const deleteTransaction = async (id: string) => {
+    const backup = transactions;
     setTransactions(prev => prev.filter(t => t.id !== id));
-    if (editingTransaction?.id === id) {
-      setEditingTransaction(null);
+    if (editingTransaction?.id === id) setEditingTransaction(null);
+
+    const { error } = await supabase.from('transactions').delete().eq('id', id).eq('user_id', userId);
+
+    if (error) {
+        console.error("Error deleting transaction:", error);
+        setTransactions(backup);
+        alert(`Failed to delete transaction: ${error.message || JSON.stringify(error)}`);
     }
   };
 
-  const handleEditTransaction = (transaction: Transaction) => {
-    setEditingTransaction(transaction);
-    if (soundEnabled) playSound('click');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTransaction(null);
-    if (soundEnabled) playSound('click');
-  };
-
-  const handleAddCategory = (type: TransactionType, name: string) => {
-    if (type === TransactionType.INCOME) {
-      setIncomeCategories(prev => [...prev, name]);
-    } else if (type === TransactionType.SAVINGS) {
-      setSavingsCategories(prev => [...prev, name]);
-    } else {
-      setExpenseCategories(prev => [...prev, name]);
-    }
-  };
-
-  const handleRemoveCategory = (type: TransactionType, name: string) => {
-    if (type === TransactionType.INCOME) {
-      setIncomeCategories(prev => prev.filter(c => c !== name));
-    } else if (type === TransactionType.SAVINGS) {
-      setSavingsCategories(prev => prev.filter(c => c !== name));
-    } else {
-      setExpenseCategories(prev => prev.filter(c => c !== name));
-    }
-  };
-
-  const handleGeneralDeposit = (amount: number) => {
-     addTransaction(amount, 'General Savings', 'Deposit to General Savings', TransactionType.SAVINGS, new Date().toISOString().split('T')[0], false);
-  };
-
-  const handleGeneralWithdraw = (amount: number) => {
-     addTransaction(-amount, 'Savings Withdrawal', 'Withdrawal from General Savings', TransactionType.SAVINGS, new Date().toISOString().split('T')[0], false);
-  };
-
-  const handleAddGoal = (name: string, targetAmount: number, category: string, isFixedDeposit?: boolean) => {
-    const newGoal: Goal = {
-      id: crypto.randomUUID(),
-      name,
-      targetAmount,
-      savedAmount: 0,
-      currency: currency,
-      category,
-      isFixedDeposit
-    };
-    setGoals(prev => [...prev, newGoal]);
-  };
-
-  const handleUpdateGoal = (id: string, name: string, targetAmount: number, category: string, isFixedDeposit?: boolean) => {
-    setGoals(prev => prev.map(g => g.id === id ? { ...g, name, targetAmount, category, isFixedDeposit } : g));
-  };
-
-  const handleDeleteGoal = (id: string) => {
-    setGoals(prev => prev.filter(g => g.id !== id));
-  };
-
+  // Helper Logic
+  const handleGeneralDeposit = (amount: number) => addTransaction(amount, 'General Savings', 'Deposit to General Savings', TransactionType.SAVINGS, new Date().toISOString().split('T')[0], false);
+  const handleGeneralWithdraw = (amount: number) => addTransaction(-amount, 'Savings Withdrawal', 'Withdrawal from General Savings', TransactionType.SAVINGS, new Date().toISOString().split('T')[0], false);
+  const handleAddGoal = (name: string, targetAmount: number, category: string, isFixedDeposit?: boolean) => setGoals(prev => [...prev, { id: crypto.randomUUID(), name, targetAmount, savedAmount: 0, currency, category, isFixedDeposit }]);
+  const handleUpdateGoal = (id: string, name: string, targetAmount: number, category: string, isFixedDeposit?: boolean) => setGoals(prev => prev.map(g => g.id === id ? { ...g, name, targetAmount, category, isFixedDeposit } : g));
+  const handleDeleteGoal = (id: string) => setGoals(prev => prev.filter(g => g.id !== id));
   const handleAddFundsToGoal = (goalId: string, amount: number) => {
-    setGoals(prev => prev.map(g => {
-      if (g.id === goalId) {
-        return { ...g, savedAmount: g.savedAmount + amount };
-      }
-      return g;
-    }));
+    setGoals(prev => prev.map(g => g.id === goalId ? { ...g, savedAmount: g.savedAmount + amount } : g));
     const goal = goals.find(g => g.id === goalId);
-    if (!goal) return;
-    const newTransaction: Transaction = {
-        id: crypto.randomUUID(),
-        amount: amount,
-        category: goal.category || (goal.isFixedDeposit ? 'Fixed Deposit' : 'Goal Saving'),
-        note: `Deposit to: ${goal.name}`,
-        type: TransactionType.SAVINGS,
-        currency: currency,
-        date: new Date().toISOString().split('T')[0],
-        excludeFromBalance: false 
-    };
-    setTransactions(prev => [newTransaction, ...prev]);
+    if (goal) addTransaction(amount, goal.category || 'Goal Saving', `Deposit to: ${goal.name}`, TransactionType.SAVINGS, new Date().toISOString().split('T')[0], false);
   };
-
   const handleWithdrawFundsFromGoal = (goalId: string, amount: number) => {
-     setGoals(prev => prev.map(g => {
-        if (g.id === goalId) {
-            return { ...g, savedAmount: Math.max(0, g.savedAmount - amount) };
-        }
-        return g;
-     }));
+     setGoals(prev => prev.map(g => g.id === goalId ? { ...g, savedAmount: Math.max(0, g.savedAmount - amount) } : g));
      const goal = goals.find(g => g.id === goalId);
-     if (!goal) return;
-     const newTransaction: Transaction = {
-        id: crypto.randomUUID(),
-        amount: -amount,
-        category: 'Savings Withdrawal',
-        note: `Withdrawal from: ${goal.name}`,
-        type: TransactionType.SAVINGS, 
-        currency: currency,
-        date: new Date().toISOString().split('T')[0],
-        excludeFromBalance: false
-     };
-     setTransactions(prev => [newTransaction, ...prev]);
+     if (goal) addTransaction(-amount, 'Savings Withdrawal', `Withdrawal from: ${goal.name}`, TransactionType.SAVINGS, new Date().toISOString().split('T')[0], false);
   };
 
-  const handleToggleSound = () => {
-    toggleSound();
-    if (!soundEnabled) {
-        setTimeout(() => playSound('toggle'), 50);
-    }
+  const handleEditTransaction = (transaction: Transaction) => { setEditingTransaction(transaction); if (soundEnabled) playSound('click'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const handleCancelEdit = () => { setEditingTransaction(null); if (soundEnabled) playSound('click'); };
+  const handleToggleSound = () => { toggleSound(); if (!soundEnabled) setTimeout(() => playSound('toggle'), 50); };
+  const handleClickSound = () => { if (soundEnabled) playSound('click'); };
+  const openCategories = () => { setSettingsInitialTab('categories'); setShowSettings(true); handleClickSound(); };
+  const openGeneralSettings = () => { setSettingsInitialTab('general'); setShowSettings(true); handleClickSound(); };
+  
+  const handleAddCategory = (type: TransactionType, name: string) => {
+    if (type === TransactionType.INCOME) setIncomeCategories(prev => [...prev, name]);
+    else if (type === TransactionType.SAVINGS) setSavingsCategories(prev => [...prev, name]);
+    else setExpenseCategories(prev => [...prev, name]);
   };
-
-  const handleClickSound = () => {
-    if (soundEnabled) playSound('click');
-  };
-
-  const openCategories = () => {
-    setSettingsInitialTab('categories');
-    setShowSettings(true);
-    handleClickSound();
-  };
-
-  const openGeneralSettings = () => {
-    setSettingsInitialTab('general');
-    setShowSettings(true);
-    handleClickSound();
+  const handleRemoveCategory = (type: TransactionType, name: string) => {
+    if (type === TransactionType.INCOME) setIncomeCategories(prev => prev.filter(c => c !== name));
+    else if (type === TransactionType.SAVINGS) setSavingsCategories(prev => prev.filter(c => c !== name));
+    else setExpenseCategories(prev => prev.filter(c => c !== name));
   };
 
   const currentCurrencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol || '$';
   const tSettings = TRANSLATIONS[language].settings;
-  const mainTransactions = transactions;
-  
+  const activeProfileName = profiles.find(p => p.id === activeProfileId)?.name || 'Main';
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300 flex flex-col relative">
       
-      {/* Background Blobs for Glassmorphism */}
+      {/* Background Blobs */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/20 blur-[120px] dark:bg-blue-600/10" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-400/20 blur-[120px] dark:bg-emerald-600/10" />
@@ -498,6 +500,20 @@ export const Tracker: React.FC<Props> = ({
           onExportData={onExportData}
           onImportData={onImportData}
           onOpenShare={() => { setShowSettings(false); setShowShareModal(true); }}
+          onLogout={onLogout}
+        />
+
+        <ProfileManager
+          isOpen={showProfileManager}
+          onClose={() => setShowProfileManager(false)}
+          profiles={profiles}
+          activeProfileId={activeProfileId}
+          onSwitchProfile={handleSwitchProfile}
+          onAddProfile={handleAddProfile}
+          onEditProfile={handleEditProfile}
+          onDeleteProfile={handleDeleteProfile}
+          language={language}
+          soundEnabled={soundEnabled}
         />
 
         <ShareModal 
@@ -505,7 +521,7 @@ export const Tracker: React.FC<Props> = ({
           onClose={() => setShowShareModal(false)}
           transactions={transactions}
           stats={stats}
-          profileName={profileName}
+          profileName={activeProfileName}
           currency={currency}
           language={language}
           soundEnabled={soundEnabled}
@@ -586,12 +602,17 @@ export const Tracker: React.FC<Props> = ({
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
+               {/* Profile Button - Opens Profile Manager */}
                <button 
-                 onClick={() => { handleClickSound(); onOpenProfileManager(); }}
-                 className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all active:scale-95 group"
-                 title={`Profile: ${profileName}`}
+                 onClick={() => { handleClickSound(); setShowProfileManager(true); }}
+                 className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all active:scale-95 group relative"
+                 title={`Profile: ${activeProfileName}`}
                >
                  <CustomProfileIcon />
+                 {/* Indicator if not default profile */}
+                 {activeProfileId !== 'default' && (
+                    <div className="absolute -bottom-1 -right-1 bg-indigo-500 rounded-full w-3 h-3 border border-white dark:border-slate-800" />
+                 )}
                </button>
 
                <button
@@ -648,19 +669,20 @@ export const Tracker: React.FC<Props> = ({
                   editingTransaction={editingTransaction}
                   onCancelEdit={handleCancelEdit}
                   currencySymbol={currentCurrencySymbol} 
+                  currencyCode={currency}
                   language={language}
                   incomeCategories={incomeCategories}
                   expenseCategories={expenseCategories}
                   savingsCategories={savingsCategories}
                   soundEnabled={soundEnabled}
                />
-               <AISuggestion transactions={mainTransactions} stats={stats} language={language} currency={currency} />
+               <AISuggestion transactions={transactions} stats={stats} language={language} currency={currency} />
             </div>
 
             <div className="lg:col-span-2 space-y-6 animate-slideUp" style={{ animationDelay: '300ms' }}>
-              <ExpenseChart transactions={mainTransactions} currency={currency} language={language} darkMode={darkMode} />
+              <ExpenseChart transactions={transactions} currency={currency} language={language} darkMode={darkMode} />
               <TransactionList 
-                transactions={mainTransactions} 
+                transactions={transactions} 
                 onDelete={deleteTransaction} 
                 onEdit={handleEditTransaction}
                 currency={currency} 

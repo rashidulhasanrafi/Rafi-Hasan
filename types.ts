@@ -14,7 +14,7 @@ export interface Transaction {
   date: string;
   type: TransactionType;
   currency: string;
-  excludeFromBalance?: boolean; // New field: if true, doesn't subtract from main balance
+  excludeFromBalance?: boolean; 
 }
 
 export interface Goal {
@@ -23,9 +23,9 @@ export interface Goal {
   targetAmount: number;
   savedAmount: number;
   currency: string;
-  category?: string; // Added category field
-  color?: string; // Hex code or tailwind class reference
-  isFixedDeposit?: boolean; // New field for Fixed Deposit logic
+  category?: string;
+  color?: string;
+  isFixedDeposit?: boolean;
 }
 
 export interface Profile {
@@ -70,7 +70,7 @@ export const DEFAULT_INCOME_CATEGORIES = [
   'Refunds',
   'Gifts',
   'Other Income',
-  'Savings Withdrawal' // Added for logic mapping
+  'Savings Withdrawal'
 ];
 
 export const DEFAULT_SAVINGS_CATEGORIES = [
@@ -165,7 +165,6 @@ export const EXCHANGE_RATES: Record<string, number> = {
 export const convertAmount = (amount: number, fromCurrency: string, toCurrency: string): number => {
   const fromRate = EXCHANGE_RATES[fromCurrency] || 1;
   const toRate = EXCHANGE_RATES[toCurrency] || 1;
-  // Convert to USD first (amount / fromRate), then to target ( * toRate)
   return (amount / fromRate) * toRate;
 };
 
@@ -297,12 +296,16 @@ export const TRANSLATIONS = {
       successRestore: 'Data restored successfully!',
       errorRestore: 'Invalid backup file.',
       shareExport: 'Share & Export',
-      openShare: 'Open Share Options'
+      openShare: 'Open Share Options',
+      logout: 'Logout',
+      logoutConfirm: 'Are you sure you want to logout?'
     },
     profile: {
       title: 'Profile Manager',
       create: 'Create Profile',
       switch: 'Switch',
+      edit: 'Edit',
+      update: 'Update',
       delete: 'Delete',
       namePlaceholder: 'Profile Name (e.g. Travel)',
       deleteTitle: 'Delete Profile',
@@ -473,12 +476,16 @@ export const TRANSLATIONS = {
       successRestore: 'ডেটা সফলভাবে রিস্টোর করা হয়েছে!',
       errorRestore: 'অকার্যকর ব্যাকআপ ফাইল।',
       shareExport: 'শেয়ার এবং এক্সপোর্ট',
-      openShare: 'শেয়ার অপশন খুলুন'
+      openShare: 'শেয়ার অপশন খুলুন',
+      logout: 'লগআউট',
+      logoutConfirm: 'আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান?'
     },
     profile: {
       title: 'প্রোফাইল ম্যানেজার',
       create: 'প্রোফাইল তৈরি করুন',
       switch: 'পরিবর্তন',
+      edit: 'এডিট',
+      update: 'আপডেট',
       delete: 'মুছুন',
       namePlaceholder: 'প্রোফাইলের নাম (যেমন: ভ্রমণ)',
       deleteTitle: 'প্রোফাইল মুছুন',

@@ -42,8 +42,6 @@ export const SplashScreen: React.FC<Props> = ({ onFinish, soundEnabled }) => {
     };
   }, [onFinish]);
 
-  if (stage === 'finished') return null;
-
   return (
     <div className={`fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center transition-opacity duration-700 ${stage === 'finished' ? 'opacity-0' : 'opacity-100'}`}>
       

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Transaction, TransactionType, TRANSLATIONS, Language, getLocalizedCategory } from '../types';
+import { Transaction, TransactionType, TRANSLATIONS, Language, getLocalizedCategory, convertAmount } from '../types';
 import { PlusCircle, Save, XCircle, Clipboard, CheckCircle2, Circle, AlertTriangle } from 'lucide-react';
 import { playSound } from '../utils/sound';
 
@@ -9,6 +9,7 @@ interface Props {
   editingTransaction: Transaction | null;
   onCancelEdit: () => void;
   currencySymbol: string;
+  currencyCode: string;
   language: Language;
   incomeCategories: string[];
   expenseCategories: string[];
@@ -22,6 +23,7 @@ export const TransactionForm: React.FC<Props> = ({
   editingTransaction,
   onCancelEdit,
   currencySymbol, 
+  currencyCode,
   language,
   incomeCategories,
   expenseCategories,
@@ -70,7 +72,13 @@ export const TransactionForm: React.FC<Props> = ({
 
   useEffect(() => {
     if (editingTransaction) {
-      setAmount(formatNumber(editingTransaction.amount.toString()));
+      // If the transaction has a different currency than the current global one, convert it for editing
+      let amt = editingTransaction.amount;
+      if (editingTransaction.currency && editingTransaction.currency !== currencyCode) {
+          amt = convertAmount(editingTransaction.amount, editingTransaction.currency, currencyCode);
+      }
+      
+      setAmount(formatNumber(amt.toString()));
       setCategory(editingTransaction.category);
       setNote(editingTransaction.note);
       setType(editingTransaction.type);
