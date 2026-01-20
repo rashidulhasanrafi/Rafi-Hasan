@@ -278,7 +278,7 @@ export const TransactionForm: React.FC<Props> = ({
 
   return (
     <>
-      <div className={`bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border ${editingTransaction ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-white/30 dark:border-white/10'} p-6 rounded-2xl shadow-lg h-fit transition-all duration-300 animate-slideUp relative z-50`}>
+      <div className={`bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border ${editingTransaction ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-white/30 dark:border-white/10'} p-6 rounded-2xl shadow-lg h-fit transition-all duration-300 animate-slideUp relative z-[40]`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
             {editingTransaction ? t.editTitle : t.title}
@@ -402,8 +402,8 @@ export const TransactionForm: React.FC<Props> = ({
 
             {showCategoryDropdown && (
                 <>
-                    <div className="fixed inset-0 z-10" onClick={() => setShowCategoryDropdown(false)} />
-                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-[250px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                    <div className="fixed inset-0 z-[45]" onClick={() => setShowCategoryDropdown(false)} />
+                    <div className="absolute z-[50] w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-[250px] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                         {getCategories(type).map(cat => (
                             <div 
                                 key={cat}

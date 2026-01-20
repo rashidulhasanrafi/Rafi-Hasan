@@ -36,7 +36,7 @@ export const AISuggestion: React.FC<Props> = ({ transactions, stats, language, c
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800 mt-6 relative overflow-hidden transition-colors">
+    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800 mt-6 relative overflow-hidden transition-colors z-[10]">
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-200 dark:bg-indigo-600 rounded-full opacity-20 blur-2xl pointer-events-none"></div>
       
       <div className="flex items-center gap-2 mb-3 relative z-10">

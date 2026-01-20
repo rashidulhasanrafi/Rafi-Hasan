@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { Loader2, LogIn, UserPlus, Lock, Mail, AlertTriangle, User, Eye, EyeOff } from 'lucide-react';
+import { Loader2, LogIn, UserPlus, Lock, Mail, AlertTriangle, User, Eye, EyeOff, KeyRound } from 'lucide-react';
 
 interface Props {
   onGuestLogin?: () => void;
@@ -13,11 +13,13 @@ export const Auth: React.FC<Props> = ({ onGuestLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
 
     try {
       if (isSignUp) {
@@ -35,6 +37,27 @@ export const Auth: React.FC<Props> = ({ onGuestLogin }) => {
         });
         if (error) throw error;
       }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address first to reset password.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      setMessage('Password reset link sent to your email!');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -79,32 +102,74 @@ export const Auth: React.FC<Props> = ({ onGuestLogin }) => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 ml-1">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-10 pr-12 py-3 bg-white/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+          {!isSignUp && (
+            <div>
+              <div className="flex justify-between items-center mb-1 ml-1">
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">Password</label>
+                <button 
+                  type="button" 
+                  onClick={handleForgotPassword}
+                  className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-12 py-3 bg-white/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {isSignUp && (
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 ml-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-12 py-3 bg-white/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-lg text-sm">
               <AlertTriangle size={16} className="shrink-0" />
               <span>{error}</span>
+            </div>
+          )}
+
+          {message && (
+            <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg text-sm">
+              <KeyRound size={16} className="shrink-0" />
+              <span>{message}</span>
             </div>
           )}
 
@@ -142,7 +207,7 @@ export const Auth: React.FC<Props> = ({ onGuestLogin }) => {
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}
             <button
-              onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
+              onClick={() => { setIsSignUp(!isSignUp); setError(null); setMessage(null); }}
               className="ml-2 font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               {isSignUp ? 'Login' : 'Sign Up'}
